@@ -5,8 +5,8 @@ A lightweight, cross-platform password manager built with Python and CustomTkint
 ## ✨ Features
 
 * **AES Encryption**: All data is secured using industry-standard AES encryption before being saved to disk.
-* **Multi-Language Support**: Fully localized in English, Italian, French, Spanish, and Danish.
-* **Animated Generator**: A "hacking-style" password generator that jumbles and locks characters for a professional UI experience.
+* **Multi-Language Support**: Fully localized in English, Italian, French and Danish.
+* **Password Generator**: A safe password generator to fully secure your accounts.
 * **Zero-Knowledge Architecture**: Your master password is never stored; data can only be decrypted locally on your machine.
 * **Modern UI**: Built with a sleek, dark-themed interface designed for high scannability.
 
@@ -32,7 +32,6 @@ Translations are managed via a dynamic `locales.json` system.
 * **English**
 * **Italian**
 * **French**
-* **Spanish**
 * **Danish**
 
 ## ⚖️ License
