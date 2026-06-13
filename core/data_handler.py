@@ -1,3 +1,32 @@
+def visible_services(vault_data: dict, query: str = "", sort_mode: str = "name_asc") -> list:
+    """
+    Returns the list of service names filtered by a search query and ordered
+    by the requested sort mode.
+
+    The query matches against both the service name and its username.
+    Entries missing a "created" timestamp (legacy data) sort as oldest.
+    """
+    services = list(vault_data.keys())
+
+    q = (query or "").strip().lower()
+    if q:
+        services = [
+            s for s in services
+            if q in s.lower() or q in str(vault_data[s].get("user", "")).lower()
+        ]
+
+    if sort_mode == "name_asc":
+        services.sort(key=str.lower)
+    elif sort_mode == "name_desc":
+        services.sort(key=str.lower, reverse=True)
+    elif sort_mode == "time_new":
+        services.sort(key=lambda s: vault_data[s].get("created", 0), reverse=True)
+    elif sort_mode == "time_old":
+        services.sort(key=lambda s: vault_data[s].get("created", 0))
+
+    return services
+
+
 def delete_entry(vault_data: dict, service: str) -> bool:
     """
     Removes a service and its associated data entirely.
