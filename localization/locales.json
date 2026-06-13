@@ -4,12 +4,25 @@
       "title": "Password Manager",
       "placeholder": "insert master password",
       "login_btn": "Login",
+      "generate_btn": "Generate a Password",
+      "tray": "Keep running in tray on close",
       "correct": "CORRECT",
       "wrong": "WRONG PASSWORD"
     },
+    "tray": {
+      "open": "Open Secure Vault",
+      "quit": "Quit"
+    },
     "dashboard": {
       "title": "ACCOUNTS",
+      "logout": "Log out",
       "no_accounts": "no accounts found",
+      "no_results": "no matching accounts",
+      "search": "Search accounts...",
+      "sort_name_asc": "Name (A–Z)",
+      "sort_name_desc": "Name (Z–A)",
+      "sort_time_new": "Newest first",
+      "sort_time_old": "Oldest first",
       "add_btn": "Add Account",
       "list_all": "List All",
       "gen_pass": "Password Generator"
@@ -34,7 +47,14 @@
       "title": "ALL ACCOUNTS"
     },
     "generator": {
-      "title": "SECURE PASSWORD GENERATOR"
+      "title": "SECURE PASSWORD GENERATOR",
+      "length": "Length: {n}",
+      "uppercase": "Uppercase (A–Z)",
+      "numbers": "Numbers (0–9)",
+      "symbols": "Symbols (!@#)",
+      "regenerate": "REGENERATE",
+      "copy": "COPY",
+      "copied": "COPIED!"
     }
   },
   "it": {
@@ -42,12 +62,25 @@
       "title": "Gestore Password",
       "placeholder": "inserisci password maestro",
       "login_btn": "Accedi",
+      "generate_btn": "Genera una Password",
+      "tray": "Mantieni attivo nella tray alla chiusura",
       "correct": "PASSWORD CORRETTA",
       "wrong": "PASSWORD ERRATA"
     },
+    "tray": {
+      "open": "Apri Secure Vault",
+      "quit": "Esci"
+    },
     "dashboard": {
       "title": "ACCOUNT",
+      "logout": "Esci",
       "no_accounts": "nessun account trovato",
+      "no_results": "nessun account corrispondente",
+      "search": "Cerca account...",
+      "sort_name_asc": "Nome (A–Z)",
+      "sort_name_desc": "Nome (Z–A)",
+      "sort_time_new": "Più recenti",
+      "sort_time_old": "Più vecchi",
       "add_btn": "Aggiungi Account",
       "list_all": "Mostra Tutti",
       "gen_pass": "Genera Password"
@@ -72,7 +105,14 @@
       "title": "TUTTI GLI ACCOUNT"
     },
     "generator": {
-      "title": "GENERATORE PASSWORD SICURE"
+      "title": "GENERATORE PASSWORD SICURE",
+      "length": "Lunghezza: {n}",
+      "uppercase": "Maiuscole (A–Z)",
+      "numbers": "Numeri (0–9)",
+      "symbols": "Simboli (!@#)",
+      "regenerate": "RIGENERA",
+      "copy": "COPIA",
+      "copied": "COPIATA!"
     }
   },
   "fr": {
@@ -80,12 +120,25 @@
       "title": "Gestionnaire de Mots de Passe",
       "placeholder": "insérer le mot de passe maître",
       "login_btn": "Connexion",
+      "generate_btn": "Générer un mot de passe",
+      "tray": "Garder actif dans la barre d'état à la fermeture",
       "correct": "CORRECT",
       "wrong": "MAUVAIS MOT DE PASSE"
     },
+    "tray": {
+      "open": "Ouvrir Secure Vault",
+      "quit": "Quitter"
+    },
     "dashboard": {
       "title": "COMPTES",
+      "logout": "Déconnexion",
       "no_accounts": "aucun compte trouvé",
+      "no_results": "aucun compte correspondant",
+      "search": "Rechercher des comptes...",
+      "sort_name_asc": "Nom (A–Z)",
+      "sort_name_desc": "Nom (Z–A)",
+      "sort_time_new": "Plus récents",
+      "sort_time_old": "Plus anciens",
       "add_btn": "Ajouter un compte",
       "list_all": "Tout lister",
       "gen_pass": "Générateur de mots de passe"
@@ -110,7 +163,14 @@
       "title": "TOUS LES COMPTES"
     },
     "generator": {
-      "title": "GÉNÉRATEUR DE MOTS DE PASSE SÉCURISÉS"
+      "title": "GÉNÉRATEUR DE MOTS DE PASSE SÉCURISÉS",
+      "length": "Longueur : {n}",
+      "uppercase": "Majuscules (A–Z)",
+      "numbers": "Chiffres (0–9)",
+      "symbols": "Symboles (!@#)",
+      "regenerate": "RÉGÉNÉRER",
+      "copy": "COPIER",
+      "copied": "COPIÉ !"
     }
   },
   "da": {
@@ -118,12 +178,25 @@
       "title": "Password Administrator",
       "placeholder": "indtast master-adgangskode",
       "login_btn": "Log ind",
+      "generate_btn": "Generer en adgangskode",
+      "tray": "Behold kørende i proceslinjen ved lukning",
       "correct": "KORREKT",
       "wrong": "FORKERT ADGANGSKODE"
     },
+    "tray": {
+      "open": "Åbn Secure Vault",
+      "quit": "Afslut"
+    },
     "dashboard": {
       "title": "KONTI",
+      "logout": "Log ud",
       "no_accounts": "ingen konti fundet",
+      "no_results": "ingen matchende konti",
+      "search": "Søg konti...",
+      "sort_name_asc": "Navn (A–Z)",
+      "sort_name_desc": "Navn (Z–A)",
+      "sort_time_new": "Nyeste først",
+      "sort_time_old": "Ældste først",
       "add_btn": "Tilføj konto",
       "list_all": "Vis alle",
       "gen_pass": "Password Generator"
@@ -148,7 +221,14 @@
       "title": "ALLE KONTI"
     },
     "generator": {
-      "title": "SIKKER PASSWORD GENERATOR"
+      "title": "SIKKER PASSWORD GENERATOR",
+      "length": "Længde: {n}",
+      "uppercase": "Store bogstaver (A–Z)",
+      "numbers": "Tal (0–9)",
+      "symbols": "Symboler (!@#)",
+      "regenerate": "GENERER IGEN",
+      "copy": "KOPIÉR",
+      "copied": "KOPIERET!"
     }
   }
 }
