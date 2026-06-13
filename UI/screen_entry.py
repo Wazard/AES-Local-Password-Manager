@@ -44,12 +44,18 @@ class EntryMixin:
         pwd_entry = ctk.CTkEntry(pwd_frame, height=38)
         pwd_entry.pack(side="left", fill="x", expand=True)
         if edit_service:
-            pwd_entry.insert(0, self.vault_data[edit_service]['pass'])
+            pwd_entry.insert(0, self.get_password(edit_service))
 
         ctk.CTkButton(pwd_frame, text=self.t("forms.generate"), width=90, height=38,
                       command=lambda: [pwd_entry.delete(0, 'end'),
                                        pwd_entry.insert(0, password_generator.generate_secure_password())]
                       ).pack(side="right", padx=(8, 0))
+
+        ctk.CTkLabel(form, text=self.t("forms.url"), font=(FONT_FAMILY, 12, "bold")).pack(anchor="w", pady=(15, 0))
+        url_entry = ctk.CTkEntry(form, height=38, placeholder_text="example.com")
+        url_entry.pack(fill="x", pady=(2, 0))
+        if edit_service:
+            url_entry.insert(0, self.vault_data[edit_service].get("url", ""))
 
         def save_action():
             service = acc_entry.get().strip()
@@ -58,8 +64,10 @@ class EntryMixin:
             existing = self.vault_data.get(service, {})
             self.vault_data[service] = {
                 "user": user_entry.get(),
-                "pass": pwd_entry.get(),
+                "pass": self.session.encrypt(pwd_entry.get()),
+                "url": url_entry.get().strip(),
                 "created": existing.get("created", time.time()),
+                "favourite": existing.get("favourite", False),
             }
             if self.save_vault():
                 self.show_dashboard()
@@ -97,10 +105,10 @@ class EntryMixin:
         pass_row.pack(fill="x", pady=(2, 0))
         pass_disp = ctk.CTkEntry(pass_row, fg_color=COLOR_BG_CARD, border_width=0, height=38,
                                  font=("Courier New", 14))
-        pass_disp.insert(0, self.vault_data[service]['pass'])
+        pass_disp.insert(0, self.get_password(service))
         pass_disp.configure(state="readonly")
         pass_disp.pack(side="left", fill="x", expand=True)
-        copy_button(self, pass_row, lambda: self.vault_data[service]['pass']).pack(side="right", padx=(8, 0))
+        copy_button(self, pass_row, lambda: self.get_password(service)).pack(side="right", padx=(8, 0))
 
         btn_frame = ctk.CTkFrame(self.container, fg_color="transparent")
         btn_frame.pack(side="bottom", pady=40)

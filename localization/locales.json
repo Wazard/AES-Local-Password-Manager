@@ -7,7 +7,8 @@
       "generate_btn": "Generate a Password",
       "tray": "Keep running in tray on close",
       "correct": "CORRECT",
-      "wrong": "WRONG PASSWORD"
+      "wrong": "WRONG PASSWORD",
+      "weak": "Weak master password — use 12+ characters with mixed types"
     },
     "tray": {
       "open": "Open Secure Vault",
@@ -33,8 +34,29 @@
       "account": "Account",
       "username": "Username",
       "password": "Password",
+      "url": "Website URL (optional)",
       "generate": "GENERATE",
       "save": "SAVE"
+    },
+    "extension": {
+      "title": "BROWSER EXTENSION",
+      "enable": "Enable autofill server",
+      "running": "● Server running on 127.0.0.1",
+      "stopped": "○ Server stopped",
+      "port": "Port",
+      "token": "Pairing token",
+      "regenerate": "Regenerate token",
+      "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked."
+    },
+    "backup": {
+      "title": "ONEDRIVE BACKUP",
+      "no_onedrive": "OneDrive was not found on this PC. Sign in to OneDrive and try again.",
+      "onedrive_found": "OneDrive folder",
+      "linked": "● Vault is backed up to OneDrive",
+      "not_linked": "Your vault is stored locally only.",
+      "create": "Create backup link",
+      "remove": "Remove backup link",
+      "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator."
     },
     "details": {
       "username_label": "Username:",
@@ -65,7 +87,8 @@
       "generate_btn": "Genera una Password",
       "tray": "Mantieni attivo nella tray alla chiusura",
       "correct": "PASSWORD CORRETTA",
-      "wrong": "PASSWORD ERRATA"
+      "wrong": "PASSWORD ERRATA",
+      "weak": "Password maestra debole — usa 12+ caratteri di tipi diversi"
     },
     "tray": {
       "open": "Apri Secure Vault",
@@ -91,8 +114,29 @@
       "account": "Account",
       "username": "Nome utente",
       "password": "Password",
+      "url": "URL del sito (facoltativo)",
       "generate": "GENERA",
       "save": "SALVA"
+    },
+    "extension": {
+      "title": "ESTENSIONE BROWSER",
+      "enable": "Abilita server di compilazione",
+      "running": "● Server attivo su 127.0.0.1",
+      "stopped": "○ Server fermo",
+      "port": "Porta",
+      "token": "Token di abbinamento",
+      "regenerate": "Rigenera token",
+      "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato."
+    },
+    "backup": {
+      "title": "BACKUP ONEDRIVE",
+      "no_onedrive": "OneDrive non è stato trovato su questo PC. Accedi a OneDrive e riprova.",
+      "onedrive_found": "Cartella OneDrive",
+      "linked": "● Il vault è salvato su OneDrive",
+      "not_linked": "Il tuo vault è memorizzato solo localmente.",
+      "create": "Crea collegamento di backup",
+      "remove": "Rimuovi collegamento di backup",
+      "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore."
     },
     "details": {
       "username_label": "Nome utente:",
@@ -123,7 +167,8 @@
       "generate_btn": "Générer un mot de passe",
       "tray": "Garder actif dans la barre d'état à la fermeture",
       "correct": "CORRECT",
-      "wrong": "MAUVAIS MOT DE PASSE"
+      "wrong": "MAUVAIS MOT DE PASSE",
+      "weak": "Mot de passe maître faible — utilisez 12+ caractères variés"
     },
     "tray": {
       "open": "Ouvrir Secure Vault",
@@ -149,8 +194,29 @@
       "account": "Compte",
       "username": "Nom d'utilisateur",
       "password": "Mot de passe",
+      "url": "URL du site (facultatif)",
       "generate": "GÉNÉRER",
       "save": "ENREGISTRER"
+    },
+    "extension": {
+      "title": "EXTENSION NAVIGATEUR",
+      "enable": "Activer le serveur de remplissage",
+      "running": "● Serveur actif sur 127.0.0.1",
+      "stopped": "○ Serveur arrêté",
+      "port": "Port",
+      "token": "Jeton d'appairage",
+      "regenerate": "Régénérer le jeton",
+      "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé."
+    },
+    "backup": {
+      "title": "SAUVEGARDE ONEDRIVE",
+      "no_onedrive": "OneDrive est introuvable sur ce PC. Connectez-vous à OneDrive et réessayez.",
+      "onedrive_found": "Dossier OneDrive",
+      "linked": "● Le coffre est sauvegardé sur OneDrive",
+      "not_linked": "Votre coffre est stocké localement uniquement.",
+      "create": "Créer le lien de sauvegarde",
+      "remove": "Supprimer le lien de sauvegarde",
+      "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur."
     },
     "details": {
       "username_label": "Nom d'utilisateur :",
@@ -181,7 +247,8 @@
       "generate_btn": "Generer en adgangskode",
       "tray": "Behold kørende i proceslinjen ved lukning",
       "correct": "KORREKT",
-      "wrong": "FORKERT ADGANGSKODE"
+      "wrong": "FORKERT ADGANGSKODE",
+      "weak": "Svag hovedadgangskode — brug 12+ tegn af blandede typer"
     },
     "tray": {
       "open": "Åbn Secure Vault",
@@ -207,8 +274,29 @@
       "account": "Konto",
       "username": "Brugernavn",
       "password": "Adgangskode",
+      "url": "Websted-URL (valgfri)",
       "generate": "GENERER",
       "save": "GEM"
+    },
+    "extension": {
+      "title": "BROWSERUDVIDELSE",
+      "enable": "Aktivér autofyld-server",
+      "running": "● Server kører på 127.0.0.1",
+      "stopped": "○ Server stoppet",
+      "port": "Port",
+      "token": "Parringstoken",
+      "regenerate": "Forny token",
+      "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op."
+    },
+    "backup": {
+      "title": "ONEDRIVE-BACKUP",
+      "no_onedrive": "OneDrive blev ikke fundet på denne pc. Log ind på OneDrive, og prøv igen.",
+      "onedrive_found": "OneDrive-mappe",
+      "linked": "● Boksen sikkerhedskopieres til OneDrive",
+      "not_linked": "Din boks gemmes kun lokalt.",
+      "create": "Opret backup-link",
+      "remove": "Fjern backup-link",
+      "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator."
     },
     "details": {
       "username_label": "Brugernavn:",

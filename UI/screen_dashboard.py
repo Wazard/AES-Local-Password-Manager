@@ -3,7 +3,7 @@ import customtkinter as ctk
 
 from core import data_handler
 from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER,
-                      COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED)
+                      COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED, COLOR_GOLD)
 
 # View modes mapped to their toolbar glyphs (File-Explorer style).
 VIEW_GLYPHS = {"▦": "grid", "☰": "list"}
@@ -13,6 +13,7 @@ class DashboardMixin:
     def show_dashboard(self):
         self.current_view = "dashboard"
         self.logged_in = True
+        self._reset_idle_timer()
         self.clear_screen()
 
         # --- Top toolbar: view toggle (left) + logout (right) ---
@@ -29,6 +30,12 @@ class DashboardMixin:
         ctk.CTkButton(topbar, text=self.t("dashboard.logout"), width=90, height=32,
                       fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
                       command=self.logout).pack(side="right")
+        ctk.CTkButton(topbar, text="⚙", width=36, height=32, font=(FONT_FAMILY, 16),
+                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                      command=self.show_extension_screen).pack(side="right", padx=(0, 8))
+        ctk.CTkButton(topbar, text="☁", width=36, height=32, font=(FONT_FAMILY, 16),
+                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                      command=self.show_backup_screen).pack(side="right", padx=(0, 8))
 
         header = ctk.CTkFrame(self.container, height=60, fg_color="transparent")
         header.pack(fill="x", pady=(2, 6))
@@ -85,6 +92,24 @@ class DashboardMixin:
         self.view_mode = VIEW_GLYPHS.get(glyph, "grid")
         self._render_accounts()
 
+    def toggle_favourite(self, service):
+        entry = self.vault_data.get(service)
+        if entry is None:
+            return
+        entry["favourite"] = not entry.get("favourite", False)
+        self.save_vault()
+        self._render_accounts()
+
+    def _star_button(self, parent, service, size):
+        """A star toggle: filled gold when favourited, hollow grey otherwise."""
+        fav = self.vault_data[service].get("favourite", False)
+        return ctk.CTkButton(
+            parent, text="★" if fav else "☆", width=size, height=size,
+            corner_radius=10, font=(FONT_FAMILY, 18),
+            fg_color="transparent", hover_color=COLOR_CARD_HOVER,
+            text_color=COLOR_GOLD if fav else COLOR_MUTED,
+            command=lambda s=service: self.toggle_favourite(s))
+
     def _render_accounts(self):
         """(Re)draws the filtered + sorted accounts in the current view mode."""
         for widget in self.dash_scroll.winfo_children():
@@ -113,18 +138,58 @@ class DashboardMixin:
     def _render_grid(self, services):
         self.dash_scroll.grid_columnconfigure((0, 1), weight=1)
         for i, service in enumerate(services):
-            ctk.CTkButton(
-                self.dash_scroll, text=service, height=80, corner_radius=12,
-                font=(FONT_FAMILY, 15, "bold"),
-                fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
-                command=lambda s=service: self.show_details(s)
-            ).grid(row=i // 2, column=i % 2, padx=8, pady=8, sticky="ew")
+            card = ctk.CTkFrame(self.dash_scroll, fg_color=COLOR_BG_CARD,
+                                corner_radius=12, height=92)
+            card.grid(row=i // 2, column=i % 2, padx=8, pady=8, sticky="ew")
+            card.grid_propagate(False)
+
+            # Left-aligned name + username, vertically centered.
+            text = ctk.CTkFrame(card, fg_color="transparent")
+            text.place(relx=0.0, rely=0.5, x=16, anchor="w")
+            name_lbl = ctk.CTkLabel(text, text=service, font=(FONT_FAMILY, 15, "bold"),
+                                    anchor="w", justify="left")
+            name_lbl.pack(anchor="w")
+            clickable = [card, text, name_lbl]
+
+            username = str(self.vault_data[service].get("user", ""))
+            if username:
+                user_lbl = ctk.CTkLabel(text, text=username, font=(FONT_FAMILY, 12),
+                                        text_color=COLOR_MUTED, anchor="w", justify="left")
+                user_lbl.pack(anchor="w")
+                clickable.append(user_lbl)
+
+            self._make_card_clickable(card, clickable, service)
+            # Star in the top-right corner.
+            self._star_button(card, service, size=28).place(relx=1.0, y=6, x=-6, anchor="ne")
+
+    def _make_card_clickable(self, card, widgets, service):
+        """Open details on click and highlight the card on hover, across all
+        of its child widgets (so the whole block behaves as one button)."""
+        def on_click(_e=None, s=service):
+            self.show_details(s)
+
+        def on_enter(_e=None):
+            card.configure(fg_color=COLOR_CARD_HOVER)
+
+        def on_leave(_e=None):
+            card.configure(fg_color=COLOR_BG_CARD)
+
+        for w in widgets:
+            w.bind("<Button-1>", on_click)
+            w.bind("<Enter>", on_enter)
+            w.bind("<Leave>", on_leave)
 
     def _render_list(self, services):
         for service in services:
+            card = ctk.CTkFrame(self.dash_scroll, fg_color=COLOR_BG_CARD,
+                                corner_radius=10, height=44)
+            card.pack(fill="x", pady=4)
+            card.pack_propagate(False)
+            # Star and name sit inside the same block.
+            self._star_button(card, service, size=44).pack(side="left")
             ctk.CTkButton(
-                self.dash_scroll, text=service, anchor="w", height=44, corner_radius=10,
+                card, text=service, anchor="w", height=44, corner_radius=10,
                 font=(FONT_FAMILY, 14),
-                fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                fg_color="transparent", hover_color=COLOR_CARD_HOVER,
                 command=lambda s=service: self.show_details(s)
-            ).pack(fill="x", pady=5)
+            ).pack(side="left", fill="both", expand=True)

@@ -1,0 +1,36 @@
+{
+  "manifest_version": 2,
+  "name": "Secure Vault Autofill",
+  "version": "1.0",
+  "description": "Fills usernames and passwords from your local Secure Vault app.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "secure-vault-autofill@local"
+    }
+  },
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "http://127.0.0.1/*"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["autofill.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "browser_action": {
+    "default_title": "Secure Vault Autofill",
+    "default_popup": "popup.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": false
+  }
+}

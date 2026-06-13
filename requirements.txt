@@ -1,0 +1,5 @@
+customtkinter
+cryptography
+argon2-cffi
+pystray
+Pillow

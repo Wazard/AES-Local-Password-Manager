@@ -1,7 +1,12 @@
+import os
 import json
 
 class LanguageManager:
-    def __init__(self, filepath="localization/locales.json"):
+    def __init__(self, filepath=None):
+        # Resolve relative to this module so it works regardless of the current
+        # working directory and inside a frozen (Nuitka/PyInstaller) build.
+        if filepath is None:
+            filepath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "locales.json")
         with open(filepath, "r", encoding="utf-8") as f:
             self.translations = json.load(f)
 

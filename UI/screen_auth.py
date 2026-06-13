@@ -5,6 +5,7 @@ import customtkinter as ctk
 from core import encryption
 from core import storage_handler
 from core import storage_compression
+from core import password_strength
 from UI.theme import FONT_FAMILY, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_DANGER
 from UI.tray import TRAY_AVAILABLE
 
@@ -57,16 +58,22 @@ class AuthMixin:
         pwd = self.pass_entry.get()
         raw_blob = storage_handler.read_vault()
         if not raw_blob:
-            self.master_password = pwd
-            self.vault_data = {}
+            # Creating a new vault — enforce a minimum master-password strength.
+            if not password_strength.evaluate(pwd)["ok"]:
+                self.status_label.configure(text=self.t("auth.weak"), text_color=COLOR_DANGER)
+                return
+            self.vault_key, self.vault_salt, self.vault_params = encryption.derive_new(pwd)
+            self.ingest_vault({})
             self.show_dashboard()
             return
         try:
-            decrypted = encryption.decrypt_data(raw_blob, pwd)
-            decompressed = storage_compression.decompress_data(decrypted)
-            self.vault_data = json.loads(decompressed)
-            self.master_password = pwd
+            payload, key, salt, params = encryption.open_vault(raw_blob, pwd)
+            decompressed = storage_compression.decompress_data(payload)
+            self.ingest_vault(json.loads(decompressed))
+            self.vault_key, self.vault_salt, self.vault_params = key, salt, params
             self.status_label.configure(text=self.t("auth.correct"), text_color=COLOR_SUCCESS)
             self.after(500, self.show_dashboard)
         except Exception:
             self.status_label.configure(text=self.t("auth.wrong"), text_color=COLOR_DANGER)
+        finally:
+            pwd = None  # drop the plaintext master password

@@ -9,7 +9,10 @@ def read_vault() -> bytes:
         return f.read()
 
 def write_vault(data: bytes):
-    temp_file = VAULT_FILE + ".tmp"
+    # Resolve through a symlink (e.g. a OneDrive backup link) so the atomic
+    # replace targets the real file and the link itself stays intact.
+    target = os.path.realpath(VAULT_FILE)
+    temp_file = target + ".tmp"
     with open(temp_file, "wb") as f:
         f.write(data)
-    os.replace(temp_file, VAULT_FILE) # Atomic swap
+    os.replace(temp_file, target) # Atomic swap
