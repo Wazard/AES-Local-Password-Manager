@@ -70,6 +70,7 @@ A single-file Windows executable is produced with Nuitka:
 ```
 .\build.ps1
 ```
+Or you can download it from the release tab.
 
 ## Tech stack
 
