@@ -1,0 +1,45 @@
+Secure Vault — companion desktop app (source)
+=============================================
+
+This is the desktop app the "Secure Vault Autofill" Firefox extension talks to.
+The extension does nothing on its own: it connects to this app over a
+token-authenticated localhost link (http://127.0.0.1) and never contacts any
+remote server. All data stays on the user's machine.
+
+Requirements
+------------
+- Windows 10/11 (the tray icon and the securevault:// launcher use Windows
+  APIs; the rest is plain Python).
+- Python 3.11+
+
+Run from source
+---------------
+1. Open a terminal in this folder.
+2. Create and activate a virtual environment:
+       python -m venv .venv
+       .venv\Scripts\activate
+3. Install dependencies:
+       pip install -r requirements.txt
+4. Start the app:
+       python main.py
+
+First launch
+------------
+- There is no vault yet, so the master password you type becomes the master
+  password for a brand-new local vault (file: vault.pwmanager, created next to
+  the app). Nothing is uploaded anywhere.
+
+Testing the extension bridge
+----------------------------
+1. In the app, open the gear (Extension) tab.
+2. Tick "Enable autofill server" and note the Port and Pairing token shown.
+3. In the extension's options, paste the same Port and Token to pair.
+4. Credentials are only served while the vault is unlocked, only to a caller
+   presenting the token, and never to web-page origins.
+
+Security summary
+----------------
+- At rest: Argon2id key derivation + AES-256-GCM (core/encryption.py).
+- In memory: per-session encryption of passwords (core/session_crypto.py).
+- Bridge: localhost only, token-gated, web origins rejected
+  (core/autofill_server.py).

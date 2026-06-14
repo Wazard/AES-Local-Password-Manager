@@ -33,12 +33,20 @@ browser.runtime.onMessage.addListener((msg) => {
       return apiFetch(`/credentials?domain=${encodeURIComponent(msg.domain)}`);
     case "GET_STATUS":
       return apiFetch(`/status`);
+    case "GENERATE":
+      return apiFetch(`/generate`);
     case "SAVE_CREDENTIAL":
       return apiFetch(`/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(msg.data),
       });
+    case "LAUNCH_APP":
+      // Triggers the securevault:// handler to open or focus the desktop app.
+      browser.tabs.create({ url: "securevault://open", active: false })
+        .then((t) => setTimeout(() => browser.tabs.remove(t.id).catch(() => {}), 1500))
+        .catch(() => {});
+      return Promise.resolve({ ok: true });
     case "GET_MUTE":
       return Promise.resolve({ muted });
     case "SET_MUTE":

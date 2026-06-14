@@ -15,7 +15,10 @@ from core import storage_handler
 from core import storage_compression
 from core import data_handler
 from core import app_config
+from core import password_generator
+from core import protocol_handler
 from core.autofill_server import AutofillServer
+from core.single_instance import ControlServer
 from core.session_crypto import SessionCrypto
 from localization.language_manager import LanguageManager
 
@@ -76,6 +79,10 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.autofill_server = None
         if self.ext_enabled.get():
             self._start_autofill()
+
+        # Single-instance control channel + securevault:// launch handler
+        self._control = None
+        self.protocol_enabled = ctk.BooleanVar(value=protocol_handler.is_registered())
 
         # Vault session — only the derived key is kept (never the master
         # password), and passwords are held encrypted with a per-session key.
@@ -164,11 +171,35 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             self.show_dashboard()
         return ok
 
+    def _autofill_generate(self):
+        return password_generator.generate_secure_password()
+
+    # --- Single-instance / launch handling ---
+    def start_control_server(self):
+        self._control = ControlServer(lambda: self.after(0, self._restore_window))
+        try:
+            self._control.start()
+        except Exception:
+            self._control = None  # focus-on-relaunch unavailable; app still runs
+
+    def toggle_protocol(self):
+        try:
+            if self.protocol_enabled.get():
+                protocol_handler.register()
+            else:
+                protocol_handler.unregister()
+        except Exception as e:
+            messagebox.showerror("Browser launch", f"Could not update launcher: {e}")
+            self.protocol_enabled.set(protocol_handler.is_registered())
+        if self.current_view == "extension":
+            self.show_extension_screen()
+
     def _start_autofill(self):
         token = self.get_extension_token()
         self.autofill_server = AutofillServer(
             "127.0.0.1", self.ext_port, token,
-            self._autofill_unlocked, self._autofill_lookup, self._autofill_add)
+            self._autofill_unlocked, self._autofill_lookup,
+            self._autofill_add, self._autofill_generate)
         try:
             self.autofill_server.start()
         except Exception as e:
@@ -206,9 +237,19 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         if self.minimize_to_tray.get() and TRAY_AVAILABLE:
             self.tray.hide()
         else:
-            self._stop_autofill()
             self.tray.stop()
             self.destroy()
+
+    def destroy(self):
+        # Single cleanup point for both the window-close and tray-quit paths.
+        if self._control is not None:
+            try:
+                self._control.stop()
+            except Exception:
+                pass
+            self._control = None
+        self._stop_autofill()
+        super().destroy()
 
     def logout(self):
         """Clear the decrypted session (key + vault) and return to login."""

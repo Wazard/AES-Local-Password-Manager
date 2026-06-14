@@ -40,13 +40,16 @@
     },
     "extension": {
       "title": "BROWSER EXTENSION",
+      "get_addon": "⬇  Get the Firefox add-on",
       "enable": "Enable autofill server",
       "running": "● Server running on 127.0.0.1",
       "stopped": "○ Server stopped",
       "port": "Port",
       "token": "Pairing token",
       "regenerate": "Regenerate token",
-      "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked."
+      "launch": "Allow the browser to open this app (securevault://)",
+      "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked.",
+      "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only."
     },
     "backup": {
       "title": "ONEDRIVE BACKUP",
@@ -120,13 +123,16 @@
     },
     "extension": {
       "title": "ESTENSIONE BROWSER",
+      "get_addon": "⬇  Ottieni il componente per Firefox",
       "enable": "Abilita server di compilazione",
       "running": "● Server attivo su 127.0.0.1",
       "stopped": "○ Server fermo",
       "port": "Porta",
       "token": "Token di abbinamento",
       "regenerate": "Rigenera token",
-      "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato."
+      "launch": "Permetti al browser di aprire questa app (securevault://)",
+      "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato.",
+      "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente."
     },
     "backup": {
       "title": "BACKUP ONEDRIVE",
@@ -200,13 +206,16 @@
     },
     "extension": {
       "title": "EXTENSION NAVIGATEUR",
+      "get_addon": "⬇  Obtenir le module Firefox",
       "enable": "Activer le serveur de remplissage",
       "running": "● Serveur actif sur 127.0.0.1",
       "stopped": "○ Serveur arrêté",
       "port": "Port",
       "token": "Jeton d'appairage",
       "regenerate": "Régénérer le jeton",
-      "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé."
+      "launch": "Autoriser le navigateur à ouvrir cette app (securevault://)",
+      "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé.",
+      "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement."
     },
     "backup": {
       "title": "SAUVEGARDE ONEDRIVE",
@@ -280,13 +289,16 @@
     },
     "extension": {
       "title": "BROWSERUDVIDELSE",
+      "get_addon": "⬇  Hent Firefox-tilføjelsen",
       "enable": "Aktivér autofyld-server",
       "running": "● Server kører på 127.0.0.1",
       "stopped": "○ Server stoppet",
       "port": "Port",
       "token": "Parringstoken",
       "regenerate": "Forny token",
-      "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op."
+      "launch": "Tillad browseren at åbne denne app (securevault://)",
+      "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op.",
+      "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger."
     },
     "backup": {
       "title": "ONEDRIVE-BACKUP",

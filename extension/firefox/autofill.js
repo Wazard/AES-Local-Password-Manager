@@ -6,6 +6,8 @@ if (!window.__secureVaultLoaded) {
 
   const send = (m) => browser.runtime.sendMessage(m);
   const isVisible = (el) => !!el && el.offsetParent !== null;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let cancelWait = false;
 
   function findPasswordField() {
     const pwds = Array.from(document.querySelectorAll('input[type="password"]'));
@@ -39,6 +41,84 @@ if (!window.__secureVaultLoaded) {
     const userField = findUsernameField(pwd);
     if (userField && user) setValue(userField, user);
     if (pwd && pass) { setValue(pwd, pass); pwd.focus(); }
+  }
+
+  function visiblePasswords() {
+    return Array.from(document.querySelectorAll('input[type="password"]')).filter(isVisible);
+  }
+
+  // Looks like account creation rather than login: an explicit new-password
+  // field, or a password + confirm-password pair.
+  function isSignupContext() {
+    if (document.querySelector('input[autocomplete="new-password"]')) return true;
+    return visiblePasswords().length >= 2;
+  }
+
+  function fillGeneratedPassword(value) {
+    const pwds = visiblePasswords();
+    pwds.forEach((p) => setValue(p, value));      // also fills the confirm field
+    if (pwds[0]) pwds[0].focus();
+  }
+
+  async function generatePassword() {
+    let pw = null;
+    const r = await send({ type: "GENERATE" });
+    if (r.ok && r.body && r.body.password) {
+      pw = r.body.password;
+    } else {
+      // App closed or locked → open/focus it and wait for the user to log in.
+      await send({ type: "LAUNCH_APP" });
+      cancelWait = false;
+      banner("Opening Secure Vault — log in and your password will fill automatically…",
+             [{ label: "Cancel", onClick: () => { cancelWait = true; removeBanner(); } }]);
+      for (let i = 0; i < 40 && !cancelWait; i++) {
+        await sleep(1500);
+        const g = await send({ type: "GENERATE" });
+        if (g.ok && g.body && g.body.password) { pw = g.body.password; break; }
+      }
+      if (cancelWait || pw === null) return;
+    }
+    fillGeneratedPassword(pw);
+    offerSaveGenerated();
+  }
+
+  // After generating/filling, immediately offer to save (reads the username and
+  // password live at click time, so a late-typed email is still captured).
+  function offerSaveGenerated() {
+    const domain = location.hostname;
+    banner("Password filled. Save this login to Secure Vault?", [
+      { label: "Save", primary: true, onClick: () => {
+          const pwd = findPasswordField();
+          const userField = findUsernameField(pwd);
+          saveWithUnlock({ domain, name: domain,
+                           user: userField ? userField.value : "",
+                           pass: pwd ? pwd.value : "" });
+      } },
+      { label: "Not now", onClick: removeBanner },
+    ]);
+  }
+
+  async function saveWithUnlock(payload) {
+    if (!payload.pass) { removeBanner(); return; }
+    let s = await send({ type: "SAVE_CREDENTIAL", data: payload });
+    if (s.ok) { removeBanner(); return; }
+    // Only chase a login if the failure was "locked/closed" (not e.g. invalid).
+    if (s.status !== 423 && s.status !== "unreachable" && s.status !== "unpaired") {
+      removeBanner();
+      return;
+    }
+    await send({ type: "LAUNCH_APP" });
+    cancelWait = false;
+    banner("Log in to Secure Vault to save this login…",
+           [{ label: "Cancel", onClick: () => { cancelWait = true; removeBanner(); } }]);
+    for (let i = 0; i < 40 && !cancelWait; i++) {
+      await sleep(1500);
+      const st = await send({ type: "GET_STATUS" });
+      if (st.ok && st.body && st.body.unlocked) {
+        const s2 = await send({ type: "SAVE_CREDENTIAL", data: payload });
+        if (s2.ok) { removeBanner(); return; }
+      }
+    }
   }
 
   // --- Banner UI ---
@@ -110,12 +190,9 @@ if (!window.__secureVaultLoaded) {
       const res = await send({ type: "GET_CREDENTIALS", domain });
       const exists = res.ok && res.body && (res.body.matches || []).some((m) => m.user === c.user);
       if (!exists) {
+        const payload = { domain, name: domain, user: c.user, pass: c.pass };
         banner(`Save this login for ${domain} to Secure Vault?`, [
-          { label: "Save", primary: true, onClick: async () => {
-              await send({ type: "SAVE_CREDENTIAL",
-                           data: { domain, name: domain, user: c.user, pass: c.pass } });
-              removeBanner();
-          } },
+          { label: "Save", primary: true, onClick: () => saveWithUnlock(payload) },
           { label: "Not now", onClick: removeBanner },
         ]);
         return;
@@ -135,6 +212,11 @@ if (!window.__secureVaultLoaded) {
           label: `Fill ${m.name}`, primary: true,
           onClick: () => { fill(m.user, m.pass); removeBanner(); },
         })));
+    } else if (res.ok && isSignupContext()) {
+      // New account on a site you haven't saved → offer a strong password.
+      banner("Generate a strong password with Secure Vault?", [
+        { label: "Generate & fill", primary: true, onClick: generatePassword },
+      ]);
     }
   }
 

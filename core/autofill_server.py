@@ -58,6 +58,11 @@ class _Handler(BaseHTTPRequestHandler):
             domain = (parse_qs(parsed.query).get("domain", [""])[0] or "").lower()
             return self._send(200, {"matches": self._ctx.lookup(domain)})
 
+        if parsed.path == "/generate":
+            if not self._ctx.is_unlocked():
+                return self._send(423, {"error": "locked"})
+            return self._send(200, {"password": self._ctx.generate()})
+
         return self._send(404, {"error": "not found"})
 
     def do_POST(self):
@@ -76,21 +81,27 @@ class _Handler(BaseHTTPRequestHandler):
         return self._send(404, {"error": "not found"})
 
 
+class _Server(ThreadingHTTPServer):
+    # Don't let another process co-bind (and possibly hijack) our port.
+    allow_reuse_address = False
+
+
 class AutofillServer:
-    def __init__(self, host, port, token, is_unlocked, lookup, add_entry):
+    def __init__(self, host, port, token, is_unlocked, lookup, add_entry, generate):
         self.host = host
         self.port = port
         self.token = token
         self.is_unlocked = is_unlocked   # callable() -> bool
         self.lookup = lookup             # callable(domain) -> list[dict]
         self.add_entry = add_entry       # callable(dict) -> bool
+        self.generate = generate         # callable() -> str
         self._httpd = None
         self._thread = None
 
     def start(self):
         if self._httpd is not None:
             return
-        self._httpd = ThreadingHTTPServer((self.host, self.port), _Handler)
+        self._httpd = _Server((self.host, self.port), _Handler)
         self._httpd.ctx = self
         self._thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         self._thread.start()

@@ -6,3 +6,4 @@ main.dist
 main.onfile-build
 main.exe
 *.pwmanager
+*.zip

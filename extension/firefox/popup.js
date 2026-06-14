@@ -2,8 +2,36 @@ const content = document.getElementById("content");
 const muteBox = document.getElementById("mute");
 
 const send = (m) => browser.runtime.sendMessage(m);
-const show = (html) => { content.innerHTML = html; };
 const openOptions = () => browser.runtime.openOptionsPage();
+
+function clear() {
+  while (content.firstChild) content.removeChild(content.firstChild);
+}
+
+function el(tag, opts = {}) {
+  const node = document.createElement(tag);
+  if (opts.text) node.textContent = opts.text;
+  if (opts.className) node.className = opts.className;
+  return node;
+}
+
+// Show a plain message, optionally with one inline action button.
+function showMessage(parts) {
+  clear();
+  const wrap = el("div", { className: "msg" });
+  for (const p of parts) {
+    if (typeof p === "string") {
+      wrap.appendChild(document.createTextNode(p));
+    } else if (p.link) {
+      const b = el("button", { text: p.link, className: "link" });
+      b.addEventListener("click", p.onClick);
+      wrap.appendChild(b);
+    } else if (p.err) {
+      wrap.appendChild(el("span", { text: p.err, className: "err" }));
+    }
+  }
+  content.appendChild(wrap);
+}
 
 muteBox.addEventListener("change", (e) => send({ type: "SET_MUTE", value: e.target.checked }));
 
@@ -14,36 +42,37 @@ async function main() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   let domain = "";
   try { domain = new URL(tab.url).hostname; } catch (e) {}
-  if (!domain) { show("No website in this tab."); return; }
+  if (!domain) { showMessage(["No website in this tab."]); return; }
 
   const res = await send({ type: "GET_CREDENTIALS", domain });
   if (res.status === "unpaired") {
-    show('Not paired yet. <button class="link" id="opt">Open options</button> to enter the port and token.');
-    document.getElementById("opt").addEventListener("click", openOptions);
+    showMessage(["Not paired yet. ", { link: "Open options", onClick: openOptions },
+                 " to enter the port and token."]);
     return;
   }
   if (res.status === "unreachable") {
-    show('<span class="err">Can\'t reach the app.</span> Is Secure Vault running with the server enabled?');
+    showMessage([{ err: "Can't reach the app." },
+                 " Is Secure Vault running with the server enabled?"]);
     return;
   }
   if (res.status === 401) {
-    show('<span class="err">Pairing failed.</span> <button class="link" id="opt">Fix in options</button>.');
-    document.getElementById("opt").addEventListener("click", openOptions);
+    showMessage([{ err: "Pairing failed." }, " ", { link: "Fix in options", onClick: openOptions }, "."]);
     return;
   }
-  if (res.status === 423) { show('<span class="err">Vault is locked.</span> Unlock the app, then retry.'); return; }
-  if (!res.ok) { show('<span class="err">Unexpected error.</span>'); return; }
+  if (res.status === 423) {
+    showMessage([{ err: "Vault is locked." }, " Unlock the app, then retry."]);
+    return;
+  }
+  if (!res.ok) { showMessage([{ err: "Unexpected error." }]); return; }
 
   const matches = (res.body && res.body.matches) || [];
-  if (!matches.length) { show(`No saved accounts for <b>${domain}</b>.`); return; }
+  if (!matches.length) { showMessage([`No saved accounts for ${domain}.`]); return; }
 
-  show("");
+  clear();
   for (const m of matches) {
-    const btn = document.createElement("button");
-    btn.className = "match";
-    btn.innerHTML = `<span class="name"></span><span class="user"></span>`;
-    btn.querySelector(".name").textContent = m.name;
-    btn.querySelector(".user").textContent = m.user || "";
+    const btn = el("button", { className: "match" });
+    btn.appendChild(el("span", { text: m.name, className: "name" }));
+    btn.appendChild(el("span", { text: m.user || "", className: "user" }));
     btn.addEventListener("click", async () => {
       await browser.tabs.sendMessage(tab.id, { type: "FILL", user: m.user, pass: m.pass });
       window.close();
