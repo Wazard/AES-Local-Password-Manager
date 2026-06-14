@@ -35,6 +35,11 @@ def _argon2_key(password: str, salt: bytes, time_cost: int, memory_kib: int, par
     )
 
 
+def derive_key_with(password: str, salt: bytes, params: dict) -> bytes:
+    """Re-derive a key for given salt/params (used to verify the master password)."""
+    return _argon2_key(password, salt, params["time"], params["memory"], params["parallel"])
+
+
 def derive_new(password: str):
     """Fresh salt + default Argon2id params + derived key (new or migrated vault)."""
     salt = os.urandom(16)

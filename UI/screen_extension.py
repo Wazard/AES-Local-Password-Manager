@@ -2,12 +2,12 @@
 import webbrowser
 import customtkinter as ctk
 
+from UI import icons
 from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_SUCCESS, COLOR_MUTED,
                       COLOR_GOLD, COLOR_GOLD_HOVER, COLOR_CHARCOAL)
 from UI.components import back_button, copy_button
 
-# TODO: replace with your real add-on listing URL once published on AMO.
-ADDON_URL = "https://addons.mozilla.org/firefox/addon/secure-vault-autofill/"
+ADDON_URL = "https://addons.mozilla.org/en-US/firefox/addon/securevault/"
 
 
 class ExtensionMixin:
@@ -19,7 +19,9 @@ class ExtensionMixin:
                      font=(FONT_FAMILY, 22, "bold")).pack(pady=(0, 10))
 
         # Featured link to the published add-on.
-        ctk.CTkButton(self.container, text=self.t("extension.get_addon"),
+        addon_icon = (icons.load_tinted("extension.png", 18, COLOR_CHARCOAL)
+                      if icons.exists("extension.png") else None)
+        ctk.CTkButton(self.container, text=self.t("extension.get_addon"), image=addon_icon,
                       fg_color=COLOR_GOLD, hover_color=COLOR_GOLD_HOVER,
                       text_color=COLOR_CHARCOAL, height=36,
                       command=lambda: webbrowser.open(ADDON_URL)).pack(pady=(0, 14))

@@ -2,40 +2,49 @@
 import customtkinter as ctk
 
 from core import data_handler
-from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER,
-                      COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED, COLOR_GOLD)
-
-# View modes mapped to their toolbar glyphs (File-Explorer style).
-VIEW_GLYPHS = {"▦": "grid", "☰": "list"}
+from UI import icons
+from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER, COLOR_STEEL,
+                      COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED, COLOR_GOLD,
+                      COLOR_DANGER, COLOR_DANGER_HOVER)
 
 
 class DashboardMixin:
     def show_dashboard(self):
         self.current_view = "dashboard"
         self.logged_in = True
-        self._reset_idle_timer()
+        self.start_security_timers()
         self.clear_screen()
 
         # --- Top toolbar: view toggle (left) + logout (right) ---
         topbar = ctk.CTkFrame(self.container, fg_color="transparent")
         topbar.pack(fill="x", padx=14, pady=(12, 0))
 
-        glyph_for_mode = {mode: glyph for glyph, mode in VIEW_GLYPHS.items()}
-        view_seg = ctk.CTkSegmentedButton(
-            topbar, values=list(VIEW_GLYPHS.keys()), command=self._on_view_change,
-            font=(FONT_FAMILY, 16), width=80)
-        view_seg.set(glyph_for_mode[self.view_mode])
-        view_seg.pack(side="left")
+        # View toggle: two icon buttons; the active mode is highlighted.
+        self._view_grid_btn = ctk.CTkButton(
+            topbar, text="", image=icons.load("show-large.png", 20), width=40, height=32,
+            fg_color=COLOR_STEEL if self.view_mode == "grid" else COLOR_BG_CARD,
+            hover_color=COLOR_CARD_HOVER, command=lambda: self._on_view_change("grid"))
+        self._view_grid_btn.pack(side="left", padx=(0, 6))
+        self._view_list_btn = ctk.CTkButton(
+            topbar, text="", image=icons.load("show-inline.png", 20), width=40, height=32,
+            fg_color=COLOR_STEEL if self.view_mode == "list" else COLOR_BG_CARD,
+            hover_color=COLOR_CARD_HOVER, command=lambda: self._on_view_change("list"))
+        self._view_list_btn.pack(side="left")
 
-        ctk.CTkButton(topbar, text=self.t("dashboard.logout"), width=90, height=32,
-                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
-                      command=self.logout).pack(side="right")
-        ctk.CTkButton(topbar, text="⚙", width=36, height=32, font=(FONT_FAMILY, 16),
+        lang_menu = ctk.CTkOptionMenu(
+            topbar, values=self.lang_manager.get_supported_languages(),
+            command=self.change_language, width=72, height=32)
+        lang_menu.set(self.current_lang)
+        lang_menu.pack(side="right")
+        ctk.CTkButton(topbar, text="", image=icons.load("settings.png", 20), width=36, height=32,
                       fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
                       command=self.show_extension_screen).pack(side="right", padx=(0, 8))
-        ctk.CTkButton(topbar, text="☁", width=36, height=32, font=(FONT_FAMILY, 16),
+        ctk.CTkButton(topbar, text="", image=icons.load("file-backup.png", 20), width=36, height=32,
                       fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
                       command=self.show_backup_screen).pack(side="right", padx=(0, 8))
+        ctk.CTkButton(topbar, text="", image=icons.load("passkey.png", 20), width=36, height=32,
+                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                      command=self.show_change_master_screen).pack(side="right", padx=(0, 8))
 
         header = ctk.CTkFrame(self.container, height=60, fg_color="transparent")
         header.pack(fill="x", pady=(2, 6))
@@ -74,6 +83,9 @@ class DashboardMixin:
 
         footer = ctk.CTkFrame(self.container, fg_color="transparent")
         footer.pack(fill="x", side="bottom", pady=20, padx=20)
+        ctk.CTkButton(footer, text=self.t("dashboard.logout"), width=90,
+                      fg_color=COLOR_DANGER, hover_color=COLOR_DANGER_HOVER,
+                      command=self.logout).pack(side="right", padx=(5, 0))
         ctk.CTkButton(footer, text=self.t("dashboard.add_btn"), fg_color=COLOR_SUCCESS,
                       hover_color=COLOR_SUCCESS_HOVER, command=self.show_add_screen).pack(
                           side="left", expand=True, padx=5)
@@ -88,8 +100,12 @@ class DashboardMixin:
         self.sort_mode = self.sort_label_to_mode.get(label, "name_asc")
         self._render_accounts()
 
-    def _on_view_change(self, glyph):
-        self.view_mode = VIEW_GLYPHS.get(glyph, "grid")
+    def _on_view_change(self, mode):
+        self.view_mode = mode if mode in ("grid", "list") else "grid"
+        self._view_grid_btn.configure(
+            fg_color=COLOR_STEEL if self.view_mode == "grid" else COLOR_BG_CARD)
+        self._view_list_btn.configure(
+            fg_color=COLOR_STEEL if self.view_mode == "list" else COLOR_BG_CARD)
         self._render_accounts()
 
     def toggle_favourite(self, service):
@@ -101,13 +117,18 @@ class DashboardMixin:
         self._render_accounts()
 
     def _star_button(self, parent, service, size):
-        """A star toggle: filled gold when favourited, hollow grey otherwise."""
+        """A star toggle: star-fill.png (used as-is) when favourited, faded
+        outline otherwise. Falls back to a gold-tinted star.png if no fill icon."""
         fav = self.vault_data[service].get("favourite", False)
+        px = 20 if size >= 40 else 16
+        if fav:
+            img = (icons.load("star-fill.png", px) if icons.exists("star-fill.png")
+                   else icons.load_tinted("star.png", px, COLOR_GOLD))
+        else:
+            img = icons.load_dimmed("star.png", px)
         return ctk.CTkButton(
-            parent, text="★" if fav else "☆", width=size, height=size,
-            corner_radius=10, font=(FONT_FAMILY, 18),
+            parent, text="", image=img, width=size, height=size, corner_radius=10,
             fg_color="transparent", hover_color=COLOR_CARD_HOVER,
-            text_color=COLOR_GOLD if fav else COLOR_MUTED,
             command=lambda s=service: self.toggle_favourite(s))
 
     def _render_accounts(self):

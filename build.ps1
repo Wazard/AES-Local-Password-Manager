@@ -11,6 +11,7 @@ $python = ".\.venv\Scripts\python.exe"
     --include-package-data=customtkinter `
     --include-data-files=UI/icon.ico=UI/icon.ico `
     --include-data-files=localization/locales.json=localization/locales.json `
+    --include-data-dir=images=images `
     --windows-icon-from-ico=UI/icon.ico `
     --windows-console-mode=disable `
     --assume-yes-for-downloads `

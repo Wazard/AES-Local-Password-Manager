@@ -14,6 +14,20 @@
       "open": "Open Secure Vault",
       "quit": "Quit"
     },
+    "changepw": {
+      "title": "CHANGE MASTER PASSWORD",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "save": "Change password",
+      "mismatch": "New passwords don't match",
+      "wrong": "Current password is incorrect",
+      "success": "Master password changed"
+    },
+    "security": {
+      "tamper_title": "Security",
+      "tamper_msg": "A debugger was detected attaching to Secure Vault. The vault has been locked."
+    },
     "dashboard": {
       "title": "ACCOUNTS",
       "logout": "Log out",
@@ -40,7 +54,7 @@
     },
     "extension": {
       "title": "BROWSER EXTENSION",
-      "get_addon": "⬇  Get the Firefox add-on",
+      "get_addon": "Firefox Extension",
       "enable": "Enable autofill server",
       "running": "● Server running on 127.0.0.1",
       "stopped": "○ Server stopped",
@@ -97,6 +111,20 @@
       "open": "Apri Secure Vault",
       "quit": "Esci"
     },
+    "changepw": {
+      "title": "CAMBIA PASSWORD MAESTRA",
+      "current": "Password attuale",
+      "new": "Nuova password",
+      "confirm": "Conferma nuova password",
+      "save": "Cambia password",
+      "mismatch": "Le nuove password non corrispondono",
+      "wrong": "La password attuale non è corretta",
+      "success": "Password maestra cambiata"
+    },
+    "security": {
+      "tamper_title": "Sicurezza",
+      "tamper_msg": "È stato rilevato un debugger collegato a Secure Vault. Il vault è stato bloccato."
+    },
     "dashboard": {
       "title": "ACCOUNT",
       "logout": "Esci",
@@ -123,7 +151,7 @@
     },
     "extension": {
       "title": "ESTENSIONE BROWSER",
-      "get_addon": "⬇  Ottieni il componente per Firefox",
+      "get_addon": "Estensione Firefox",
       "enable": "Abilita server di compilazione",
       "running": "● Server attivo su 127.0.0.1",
       "stopped": "○ Server fermo",
@@ -180,6 +208,20 @@
       "open": "Ouvrir Secure Vault",
       "quit": "Quitter"
     },
+    "changepw": {
+      "title": "CHANGER LE MOT DE PASSE MAÎTRE",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmer le nouveau mot de passe",
+      "save": "Changer le mot de passe",
+      "mismatch": "Les nouveaux mots de passe ne correspondent pas",
+      "wrong": "Le mot de passe actuel est incorrect",
+      "success": "Mot de passe maître modifié"
+    },
+    "security": {
+      "tamper_title": "Sécurité",
+      "tamper_msg": "Un débogueur a été détecté en train de s'attacher à Secure Vault. Le coffre a été verrouillé."
+    },
     "dashboard": {
       "title": "COMPTES",
       "logout": "Déconnexion",
@@ -206,7 +248,7 @@
     },
     "extension": {
       "title": "EXTENSION NAVIGATEUR",
-      "get_addon": "⬇  Obtenir le module Firefox",
+      "get_addon": "Extension Firefox",
       "enable": "Activer le serveur de remplissage",
       "running": "● Serveur actif sur 127.0.0.1",
       "stopped": "○ Serveur arrêté",
@@ -263,6 +305,20 @@
       "open": "Åbn Secure Vault",
       "quit": "Afslut"
     },
+    "changepw": {
+      "title": "SKIFT HOVEDADGANGSKODE",
+      "current": "Nuværende adgangskode",
+      "new": "Ny adgangskode",
+      "confirm": "Bekræft ny adgangskode",
+      "save": "Skift adgangskode",
+      "mismatch": "De nye adgangskoder matcher ikke",
+      "wrong": "Den nuværende adgangskode er forkert",
+      "success": "Hovedadgangskode ændret"
+    },
+    "security": {
+      "tamper_title": "Sikkerhed",
+      "tamper_msg": "En debugger blev registreret tilknyttet Secure Vault. Boksen er blevet låst."
+    },
     "dashboard": {
       "title": "KONTI",
       "logout": "Log ud",
@@ -289,7 +345,7 @@
     },
     "extension": {
       "title": "BROWSERUDVIDELSE",
-      "get_addon": "⬇  Hent Firefox-tilføjelsen",
+      "get_addon": "Firefox-udvidelse",
       "enable": "Aktivér autofyld-server",
       "running": "● Server kører på 127.0.0.1",
       "stopped": "○ Server stoppet",

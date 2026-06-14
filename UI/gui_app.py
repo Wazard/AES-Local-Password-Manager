@@ -16,7 +16,9 @@ from core import storage_compression
 from core import data_handler
 from core import app_config
 from core import password_generator
+from core import password_strength
 from core import protocol_handler
+from core import tamper
 from core.autofill_server import AutofillServer
 from core.single_instance import ControlServer
 from core.session_crypto import SessionCrypto
@@ -30,6 +32,7 @@ from UI.screen_entry import EntryMixin
 from UI.screen_generator import GeneratorMixin
 from UI.screen_extension import ExtensionMixin
 from UI.screen_backup import BackupMixin
+from UI.screen_changepw import ChangeMasterMixin
 
 apply_theme()
 
@@ -38,7 +41,8 @@ CLIPBOARD_CLEAR_MS = 25 * 1000    # wipe copied secrets from the clipboard
 
 
 class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
-                         GeneratorMixin, ExtensionMixin, BackupMixin):
+                         GeneratorMixin, ExtensionMixin, BackupMixin,
+                         ChangeMasterMixin):
     def __init__(self):
         super().__init__()
 
@@ -92,8 +96,9 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.vault_data = {}
         self.session = SessionCrypto()
 
-        # Auto-lock on inactivity
+        # Auto-lock on inactivity + tamper tripwire
         self._idle_after = None
+        self._tamper_after = None
         self.bind_all("<Key>", self._on_activity, add="+")
         self.bind_all("<ButtonPress>", self._on_activity, add="+")
 
@@ -113,11 +118,34 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
                 self.after_cancel(self._idle_after)
             except Exception:
                 pass
+            self._idle_after = None
+        # "Remember me" (keep running in tray) opts out of the idle auto-lock;
+        # the tamper tripwire below is the safety net for a long-lived session.
+        if self.minimize_to_tray.get():
+            return
         self._idle_after = self.after(AUTO_LOCK_MS, self._auto_lock)
 
     def _auto_lock(self):
         if self.logged_in:
             self.logout()
+
+    # --- Tamper tripwire: lock instantly if a debugger attaches ---
+    def start_security_timers(self):
+        self._reset_idle_timer()
+        if self._tamper_after is None:
+            self._tamper_check()
+
+    def _tamper_check(self):
+        if not self.logged_in:
+            self._tamper_after = None
+            return
+        if tamper.debugger_attached():
+            self._tamper_after = None
+            self.logout()
+            messagebox.showwarning(self.t("security.tamper_title"),
+                                   self.t("security.tamper_msg"))
+            return
+        self._tamper_after = self.after(1500, self._tamper_check)
 
     # --- Browser-extension autofill ---
     def get_extension_token(self):
@@ -173,6 +201,26 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
 
     def _autofill_generate(self):
         return password_generator.generate_secure_password()
+
+    # --- Master password ---
+    def _verify_master(self, password):
+        if self.vault_key is None:
+            return False
+        try:
+            import hmac
+            candidate = encryption.derive_key_with(password, self.vault_salt, self.vault_params)
+            return hmac.compare_digest(candidate, self.vault_key)
+        except Exception:
+            return False
+
+    def change_master(self, current, new):
+        """Re-keys the vault to a new master password. Returns a status string."""
+        if not self._verify_master(current):
+            return "wrong_current"
+        if not password_strength.evaluate(new)["ok"]:
+            return "weak"
+        self.vault_key, self.vault_salt, self.vault_params = encryption.derive_new(new)
+        return "ok" if self._persist_vault() else "save_failed"
 
     # --- Single-instance / launch handling ---
     def start_control_server(self):
@@ -253,12 +301,14 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
 
     def logout(self):
         """Clear the decrypted session (key + vault) and return to login."""
-        if self._idle_after is not None:
-            try:
-                self.after_cancel(self._idle_after)
-            except Exception:
-                pass
-            self._idle_after = None
+        for attr in ("_idle_after", "_tamper_after"):
+            handle = getattr(self, attr, None)
+            if handle is not None:
+                try:
+                    self.after_cancel(handle)
+                except Exception:
+                    pass
+                setattr(self, attr, None)
         self.vault_key = None
         self.vault_salt = None
         self.vault_params = None
@@ -287,6 +337,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             "generator": self.show_gen_pass_screen,
             "extension": self.show_extension_screen,
             "backup": self.show_backup_screen,
+            "changepw": self.show_change_master_screen,
         }
         view_map[self.current_view]()
 
