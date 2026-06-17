@@ -1,9 +1,36 @@
-.venv
-.vscode
-__pycache__
-main.build
-main.dist
-main.onfile-build
-main.exe
-*.pwmanager
+# --- Virtual env / IDE ---
+.venv/
+.vscode/
+.idea/
+
+# --- Python caches ---
+__pycache__/
+*.pyc
+*.pyo
+
+# --- Nuitka build artifacts ---
+main.build/
+main.dist/
+main.onefile-build/
+*.exe
+
+# --- Installer output / downloaded tools ---
+installer/
+innosetup-*.exe
+*.xpi
+
+# --- Distribution archives ---
 *.zip
+
+# --- User data & secrets (never commit) ---
+*.pwmanager
+*.pwmanager.tmp
+extension_config.json
+debug_log.txt
+github.txt
+
+# --- Misc / temp ---
+sv_backup_result.json
+sec_*.py
+*.ps1
+*.iss
