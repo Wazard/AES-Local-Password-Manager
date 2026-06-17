@@ -19,6 +19,8 @@ from core import password_generator
 from core import password_strength
 from core import protocol_handler
 from core import tamper
+from core import backup
+from core import elevation
 from core.autofill_server import AutofillServer
 from core.single_instance import ControlServer
 from core.session_crypto import SessionCrypto
@@ -76,17 +78,21 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             pass
         self.protocol("WM_DELETE_WINDOW", self._on_close)
 
-        # Browser-extension autofill bridge
+        # Persisted config (extension pairing + last language)
         self.ext_config = app_config.load()
+        self.current_lang = self.ext_config.get("language", "en")
         self.ext_port = self.ext_config.get("port", app_config.DEFAULT_PORT)
         self.ext_enabled = ctk.BooleanVar(value=self.ext_config.get("enabled", False))
         self.autofill_server = None
         if self.ext_enabled.get():
             self._start_autofill()
+            self._ensure_protocol(True)  # browser-launch goes with the server
+
+        # Anti-tamper protection (opt-in; off by default)
+        self.tamper_enabled = ctk.BooleanVar(value=self.ext_config.get("tamper_protection", False))
 
         # Single-instance control channel + securevault:// launch handler
         self._control = None
-        self.protocol_enabled = ctk.BooleanVar(value=protocol_handler.is_registered())
 
         # Vault session — only the derived key is kept (never the master
         # password), and passwords are held encrypted with a per-session key.
@@ -106,6 +112,19 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.container.pack(fill="both", expand=True)
 
         self.show_auth_screen()
+        self.after(600, self._maybe_show_tamper_notice)
+
+    def _maybe_show_tamper_notice(self):
+        """One-time heads-up that anti-tamper protection exists and is opt-in."""
+        if self.ext_config.get("tamper_notice_seen"):
+            return
+        self.ext_config["tamper_notice_seen"] = True
+        try:
+            app_config.save(self.ext_config)
+        except Exception:
+            pass
+        messagebox.showinfo(self.t("security.tamper_notice_title"),
+                            self.t("security.tamper_notice_msg"))
 
     # --- Auto-lock ---
     def _on_activity(self, _event=None):
@@ -129,11 +148,29 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         if self.logged_in:
             self.logout()
 
-    # --- Tamper tripwire: lock instantly if a debugger attaches ---
+    # --- Tamper tripwire: lock instantly if a debugger attaches (opt-in) ---
     def start_security_timers(self):
         self._reset_idle_timer()
-        if self._tamper_after is None:
+        if self.tamper_enabled.get() and self._tamper_after is None:
             self._tamper_check()
+
+    def toggle_tamper(self):
+        self.ext_config["tamper_protection"] = self.tamper_enabled.get()
+        try:
+            app_config.save(self.ext_config)
+        except Exception:
+            pass
+        if self.tamper_enabled.get():
+            if self.logged_in and self._tamper_after is None:
+                self._tamper_check()
+        elif self._tamper_after is not None:
+            try:
+                self.after_cancel(self._tamper_after)
+            except Exception:
+                pass
+            self._tamper_after = None
+        if self.current_view == "extension":
+            self.show_extension_screen()
 
     def _tamper_check(self):
         if not self.logged_in:
@@ -230,17 +267,29 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         except Exception:
             self._control = None  # focus-on-relaunch unavailable; app still runs
 
-    def toggle_protocol(self):
+    def _restore_window(self):
+        """Bring the window to the front in response to a second launch.
+
+        Covers both states the window may be in: withdrawn to the tray (the
+        common case) and merely minimised/behind other windows. The brief
+        topmost toggle forces Windows to actually raise it past focus-stealing
+        prevention rather than just flashing the taskbar button."""
         try:
-            if self.protocol_enabled.get():
-                protocol_handler.register()
-            else:
-                protocol_handler.unregister()
-        except Exception as e:
-            messagebox.showerror("Browser launch", f"Could not update launcher: {e}")
-            self.protocol_enabled.set(protocol_handler.is_registered())
-        if self.current_view == "extension":
-            self.show_extension_screen()
+            self.deiconify()
+            self.lift()
+            self.attributes("-topmost", True)
+            self.attributes("-topmost", False)
+            self.focus_force()
+        except Exception:
+            pass
+
+    def _ensure_protocol(self, enabled):
+        """Browser-launch (securevault://) is tied to the autofill server: the
+        extension can't open the app without it, so they go together."""
+        try:
+            protocol_handler.register() if enabled else protocol_handler.unregister()
+        except Exception:
+            pass
 
     def _start_autofill(self):
         token = self.get_extension_token()
@@ -250,9 +299,9 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             self._autofill_add, self._autofill_generate)
         try:
             self.autofill_server.start()
-        except Exception as e:
+        except Exception:
+            # Port already in use (e.g. another instance) — fail quietly.
             self.autofill_server = None
-            messagebox.showerror("Extension", f"Could not start local server: {e}")
 
     def _stop_autofill(self):
         if self.autofill_server is not None:
@@ -268,6 +317,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             self._start_autofill()
         else:
             self._stop_autofill()
+        self._ensure_protocol(enabled)  # browser-launch follows the server
         if self.current_view == "extension":
             self.show_extension_screen()
 
@@ -299,6 +349,49 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self._stop_autofill()
         super().destroy()
 
+    # --- First-run: adopt an existing vault file ---
+    def import_existing_vault(self):
+        from tkinter import filedialog
+        src = filedialog.askopenfilename(
+            title=self.t("import.title"),
+            filetypes=[("Secure Vault", "*.pwmanager"), ("All files", "*.*")])
+        if not src:
+            return
+        src = os.path.abspath(src)
+        vault = os.path.abspath(storage_handler.VAULT_FILE)
+        if src == vault:
+            return
+        # Yes = link (keep in place for cloud backup), No = move here, Cancel = abort
+        choice = messagebox.askyesnocancel(self.t("import.title"), self.t("import.prompt"))
+        if choice is None:
+            return
+        if not choice:
+            ok, msg, _ = backup.import_vault(vault, src, "move")
+            self._after_import(ok, msg)
+            return
+        if backup.can_symlink() or elevation.is_admin():
+            ok, msg, _ = backup.import_vault(vault, src, "link")
+            self._after_import(ok, msg)
+        elif elevation.run_elevated_cmd('mklink "%s" "%s"' % (vault, src)):
+            self._poll_import_link()
+        else:
+            self._after_import(False, self.t("backup.denied"))
+
+    def _poll_import_link(self, tries=0):
+        if os.path.islink(os.path.abspath(storage_handler.VAULT_FILE)):
+            self.show_auth_screen()
+            return
+        if tries < 20:
+            self.after(500, lambda: self._poll_import_link(tries + 1))
+        else:
+            self.show_auth_screen()
+
+    def _after_import(self, ok, msg):
+        if ok:
+            self.show_auth_screen()  # vault now present → normal login
+        else:
+            messagebox.showinfo(self.t("import.title"), msg)
+
     def logout(self):
         """Clear the decrypted session (key + vault) and return to login."""
         for attr in ("_idle_after", "_tamper_after"):
@@ -326,8 +419,13 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         return self.lang_manager.get_text(key, self.current_lang, **kwargs)
 
     def change_language(self, new_lang):
-        """Refresh the current screen with the new language."""
+        """Refresh the current screen with the new language and remember it."""
         self.current_lang = new_lang
+        self.ext_config["language"] = new_lang
+        try:
+            app_config.save(self.ext_config)
+        except Exception:
+            pass
         view_map = {
             "auth": self.show_auth_screen,
             "dashboard": self.show_dashboard,

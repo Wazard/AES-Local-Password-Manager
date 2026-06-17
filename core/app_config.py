@@ -6,8 +6,9 @@ extension pairing token and preferences. Lives beside `vault.pwmanager`.
 import os
 import json
 import secrets
+from core import paths
 
-CONFIG_FILE = "extension_config.json"
+CONFIG_FILE = os.path.join(paths.data_dir(), "extension_config.json")
 DEFAULT_PORT = 8765
 
 

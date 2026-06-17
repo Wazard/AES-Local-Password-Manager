@@ -1,6 +1,7 @@
 import os
+from core import paths
 
-VAULT_FILE = "vault.pwmanager"
+VAULT_FILE = os.path.join(paths.data_dir(), "vault.pwmanager")
 
 def read_vault() -> bytes:
     if not os.path.exists(VAULT_FILE):

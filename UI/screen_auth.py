@@ -6,7 +6,8 @@ from core import encryption
 from core import storage_handler
 from core import storage_compression
 from core import password_strength
-from UI.theme import FONT_FAMILY, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_DANGER
+from UI.theme import (FONT_FAMILY, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_DANGER,
+                      COLOR_BG_CARD, COLOR_CARD_HOVER)
 from UI.tray import TRAY_AVAILABLE
 
 
@@ -45,7 +46,15 @@ class AuthMixin:
 
         # Generate a password without logging in.
         ctk.CTkButton(frame, text=self.t("auth.generate_btn"), height=40, width=260,
-                      command=self.show_gen_pass_screen).pack(pady=(0, 16))
+                      command=self.show_gen_pass_screen).pack(pady=(0, 8))
+
+        # First run (no vault yet): offer to adopt an existing vault file.
+        if not storage_handler.read_vault():
+            ctk.CTkButton(frame, text=self.t("auth.import_btn"), height=36, width=260,
+                          fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                          command=self.import_existing_vault).pack(pady=(0, 16))
+        else:
+            ctk.CTkLabel(frame, text="").pack(pady=(0, 8))
 
         # "Remind me" / keep running in the Windows tray on close.
         tray_chk = ctk.CTkCheckBox(frame, text=self.t("auth.tray"),

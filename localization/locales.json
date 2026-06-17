@@ -8,7 +8,8 @@
       "tray": "Keep running in tray on close",
       "correct": "CORRECT",
       "wrong": "WRONG PASSWORD",
-      "weak": "Weak master password — use 12+ characters with mixed types"
+      "weak": "Weak master password — use 12+ characters with mixed types",
+      "import_btn": "I already have a vault"
     },
     "tray": {
       "open": "Open Secure Vault",
@@ -26,7 +27,9 @@
     },
     "security": {
       "tamper_title": "Security",
-      "tamper_msg": "A debugger was detected attaching to Secure Vault. The vault has been locked."
+      "tamper_msg": "A debugger was detected attaching to Secure Vault. The vault has been locked.",
+      "tamper_notice_title": "Anti-tampering available",
+      "tamper_notice_msg": "Secure Vault can lock itself instantly if a debugger attaches to it. This protection is OFF by default — you can turn it on anytime in the settings (gear) tab."
     },
     "dashboard": {
       "title": "ACCOUNTS",
@@ -53,7 +56,7 @@
       "save": "SAVE"
     },
     "extension": {
-      "title": "BROWSER EXTENSION",
+      "title": "SETTINGS",
       "get_addon": "Firefox Extension",
       "enable": "Enable autofill server",
       "running": "● Server running on 127.0.0.1",
@@ -63,17 +66,23 @@
       "regenerate": "Regenerate token",
       "launch": "Allow the browser to open this app (securevault://)",
       "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked.",
-      "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only."
+      "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only.",
+      "tamper": "Lock instantly if a debugger attaches",
+      "tamper_hint": "Anti-tampering: instantly locks the vault if a debugger attaches to the app. Off by default; it may cause antivirus false positives."
     },
     "backup": {
-      "title": "ONEDRIVE BACKUP",
+      "title": "VAULT BACKUP",
       "no_onedrive": "OneDrive was not found on this PC. Sign in to OneDrive and try again.",
       "onedrive_found": "OneDrive folder",
-      "linked": "● Vault is backed up to OneDrive",
+      "linked": "● Vault is backed up",
       "not_linked": "Your vault is stored locally only.",
-      "create": "Create backup link",
+      "create": "Back up to OneDrive Folder",
       "remove": "Remove backup link",
-      "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator."
+      "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator.",
+      "choose": "Back up to a custom folder…",
+      "waiting": "Waiting for permission…",
+      "denied": "Permission was denied.",
+      "or": "OR"
     },
     "details": {
       "username_label": "Username:",
@@ -94,6 +103,10 @@
       "regenerate": "REGENERATE",
       "copy": "COPY",
       "copied": "COPIED!"
+    },
+    "import": {
+      "title": "Import vault",
+      "prompt": "Link to this file so it stays where it is (e.g. for OneDrive backup)?\n\nYes = Link    No = Move it here"
     }
   },
   "it": {
@@ -105,7 +118,8 @@
       "tray": "Mantieni attivo nella tray alla chiusura",
       "correct": "PASSWORD CORRETTA",
       "wrong": "PASSWORD ERRATA",
-      "weak": "Password maestra debole — usa 12+ caratteri di tipi diversi"
+      "weak": "Password maestra debole — usa 12+ caratteri di tipi diversi",
+      "import_btn": "Ho già un vault"
     },
     "tray": {
       "open": "Apri Secure Vault",
@@ -123,7 +137,9 @@
     },
     "security": {
       "tamper_title": "Sicurezza",
-      "tamper_msg": "È stato rilevato un debugger collegato a Secure Vault. Il vault è stato bloccato."
+      "tamper_msg": "È stato rilevato un debugger collegato a Secure Vault. Il vault è stato bloccato.",
+      "tamper_notice_title": "Anti-manomissione disponibile",
+      "tamper_notice_msg": "Secure Vault può bloccarsi subito se un debugger si collega. Questa protezione è DISATTIVATA per impostazione predefinita — puoi attivarla quando vuoi nella scheda impostazioni (ingranaggio)."
     },
     "dashboard": {
       "title": "ACCOUNT",
@@ -150,7 +166,7 @@
       "save": "SALVA"
     },
     "extension": {
-      "title": "ESTENSIONE BROWSER",
+      "title": "IMPOSTAZIONI",
       "get_addon": "Estensione Firefox",
       "enable": "Abilita server di compilazione",
       "running": "● Server attivo su 127.0.0.1",
@@ -160,17 +176,23 @@
       "regenerate": "Rigenera token",
       "launch": "Permetti al browser di aprire questa app (securevault://)",
       "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato.",
-      "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente."
+      "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente.",
+      "tamper": "Blocca subito se un debugger si collega",
+      "tamper_hint": "Anti-manomissione: blocca subito il vault se un debugger si collega all'app. Disattivato per impostazione predefinita; può causare falsi positivi negli antivirus."
     },
     "backup": {
-      "title": "BACKUP ONEDRIVE",
+      "title": "BACKUP VAULT",
       "no_onedrive": "OneDrive non è stato trovato su questo PC. Accedi a OneDrive e riprova.",
       "onedrive_found": "Cartella OneDrive",
-      "linked": "● Il vault è salvato su OneDrive",
+      "linked": "● Il vault è salvato",
       "not_linked": "Il tuo vault è memorizzato solo localmente.",
-      "create": "Crea collegamento di backup",
+      "create": "Backup nella cartella OneDrive",
       "remove": "Rimuovi collegamento di backup",
-      "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore."
+      "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore.",
+      "choose": "Backup in una cartella personalizzata…",
+      "waiting": "In attesa dell'autorizzazione…",
+      "denied": "Autorizzazione negata.",
+      "or": "OPPURE"
     },
     "details": {
       "username_label": "Nome utente:",
@@ -191,6 +213,10 @@
       "regenerate": "RIGENERA",
       "copy": "COPIA",
       "copied": "COPIATA!"
+    },
+    "import": {
+      "title": "Importa vault",
+      "prompt": "Collegare questo file lasciandolo dov'è (es. per il backup OneDrive)?\n\nSì = Collega    No = Sposta qui"
     }
   },
   "fr": {
@@ -202,7 +228,8 @@
       "tray": "Garder actif dans la barre d'état à la fermeture",
       "correct": "CORRECT",
       "wrong": "MAUVAIS MOT DE PASSE",
-      "weak": "Mot de passe maître faible — utilisez 12+ caractères variés"
+      "weak": "Mot de passe maître faible — utilisez 12+ caractères variés",
+      "import_btn": "J'ai déjà un coffre"
     },
     "tray": {
       "open": "Ouvrir Secure Vault",
@@ -220,7 +247,9 @@
     },
     "security": {
       "tamper_title": "Sécurité",
-      "tamper_msg": "Un débogueur a été détecté en train de s'attacher à Secure Vault. Le coffre a été verrouillé."
+      "tamper_msg": "Un débogueur a été détecté en train de s'attacher à Secure Vault. Le coffre a été verrouillé.",
+      "tamper_notice_title": "Anti-altération disponible",
+      "tamper_notice_msg": "Secure Vault peut se verrouiller immédiatement si un débogueur s'attache. Cette protection est DÉSACTIVÉE par défaut — vous pouvez l'activer à tout moment dans l'onglet paramètres (engrenage)."
     },
     "dashboard": {
       "title": "COMPTES",
@@ -247,7 +276,7 @@
       "save": "ENREGISTRER"
     },
     "extension": {
-      "title": "EXTENSION NAVIGATEUR",
+      "title": "PARAMÈTRES",
       "get_addon": "Extension Firefox",
       "enable": "Activer le serveur de remplissage",
       "running": "● Serveur actif sur 127.0.0.1",
@@ -257,17 +286,23 @@
       "regenerate": "Régénérer le jeton",
       "launch": "Autoriser le navigateur à ouvrir cette app (securevault://)",
       "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé.",
-      "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement."
+      "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement.",
+      "tamper": "Verrouiller si un débogueur s'attache",
+      "tamper_hint": "Anti-altération : verrouille immédiatement le coffre si un débogueur s'attache à l'application. Désactivé par défaut ; peut provoquer des faux positifs antivirus."
     },
     "backup": {
-      "title": "SAUVEGARDE ONEDRIVE",
+      "title": "SAUVEGARDE DU COFFRE",
       "no_onedrive": "OneDrive est introuvable sur ce PC. Connectez-vous à OneDrive et réessayez.",
       "onedrive_found": "Dossier OneDrive",
-      "linked": "● Le coffre est sauvegardé sur OneDrive",
+      "linked": "● Le coffre est sauvegardé",
       "not_linked": "Votre coffre est stocké localement uniquement.",
-      "create": "Créer le lien de sauvegarde",
+      "create": "Sauvegarder dans le dossier OneDrive",
       "remove": "Supprimer le lien de sauvegarde",
-      "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur."
+      "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur.",
+      "choose": "Sauvegarder dans un dossier personnalisé…",
+      "waiting": "En attente de l'autorisation…",
+      "denied": "Autorisation refusée.",
+      "or": "OU"
     },
     "details": {
       "username_label": "Nom d'utilisateur :",
@@ -288,6 +323,10 @@
       "regenerate": "RÉGÉNÉRER",
       "copy": "COPIER",
       "copied": "COPIÉ !"
+    },
+    "import": {
+      "title": "Importer le coffre",
+      "prompt": "Lier ce fichier pour le laisser où il est (p. ex. pour la sauvegarde OneDrive)?\n\nOui = Lier    Non = Déplacer ici"
     }
   },
   "da": {
@@ -299,7 +338,8 @@
       "tray": "Behold kørende i proceslinjen ved lukning",
       "correct": "KORREKT",
       "wrong": "FORKERT ADGANGSKODE",
-      "weak": "Svag hovedadgangskode — brug 12+ tegn af blandede typer"
+      "weak": "Svag hovedadgangskode — brug 12+ tegn af blandede typer",
+      "import_btn": "Jeg har allerede en boks"
     },
     "tray": {
       "open": "Åbn Secure Vault",
@@ -317,7 +357,9 @@
     },
     "security": {
       "tamper_title": "Sikkerhed",
-      "tamper_msg": "En debugger blev registreret tilknyttet Secure Vault. Boksen er blevet låst."
+      "tamper_msg": "En debugger blev registreret tilknyttet Secure Vault. Boksen er blevet låst.",
+      "tamper_notice_title": "Anti-manipulation tilgængelig",
+      "tamper_notice_msg": "Secure Vault kan låse sig selv med det samme, hvis en debugger tilknyttes. Denne beskyttelse er SLÅET FRA som standard — du kan slå den til når som helst under indstillinger (tandhjul)."
     },
     "dashboard": {
       "title": "KONTI",
@@ -344,7 +386,7 @@
       "save": "GEM"
     },
     "extension": {
-      "title": "BROWSERUDVIDELSE",
+      "title": "INDSTILLINGER",
       "get_addon": "Firefox-udvidelse",
       "enable": "Aktivér autofyld-server",
       "running": "● Server kører på 127.0.0.1",
@@ -354,17 +396,23 @@
       "regenerate": "Forny token",
       "launch": "Tillad browseren at åbne denne app (securevault://)",
       "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op.",
-      "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger."
+      "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger.",
+      "tamper": "Lås straks hvis en debugger tilknyttes",
+      "tamper_hint": "Anti-manipulation: låser straks boksen, hvis en debugger tilknyttes appen. Slået fra som standard; kan udløse falske antivirus-alarmer."
     },
     "backup": {
-      "title": "ONEDRIVE-BACKUP",
+      "title": "BACKUP AF BOKS",
       "no_onedrive": "OneDrive blev ikke fundet på denne pc. Log ind på OneDrive, og prøv igen.",
       "onedrive_found": "OneDrive-mappe",
-      "linked": "● Boksen sikkerhedskopieres til OneDrive",
+      "linked": "● Boksen er sikkerhedskopieret",
       "not_linked": "Din boks gemmes kun lokalt.",
-      "create": "Opret backup-link",
+      "create": "Sikkerhedskopiér til OneDrive-mappen",
       "remove": "Fjern backup-link",
-      "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator."
+      "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator.",
+      "choose": "Sikkerhedskopiér til en valgfri mappe…",
+      "waiting": "Venter på tilladelse…",
+      "denied": "Tilladelse blev nægtet.",
+      "or": "ELLER"
     },
     "details": {
       "username_label": "Brugernavn:",
@@ -385,6 +433,10 @@
       "regenerate": "GENERER IGEN",
       "copy": "KOPIÉR",
       "copied": "KOPIERET!"
+    },
+    "import": {
+      "title": "Importér boks",
+      "prompt": "Link til denne fil, så den bliver, hvor den er (f.eks. til OneDrive-backup)?\n\nJa = Link    Nej = Flyt hertil"
     }
   }
 }

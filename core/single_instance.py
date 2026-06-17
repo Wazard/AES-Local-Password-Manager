@@ -1,29 +1,49 @@
-"""Single-instance control channel.
+"""Single-instance detection + focus channel.
 
-The app listens on a localhost control port. A second launch (e.g. from a
-securevault:// link while the app is already running/in the tray) detects the
-running instance, tells it to focus, and exits — instead of opening a duplicate.
+Detection uses a named mutex (reliable: the OS releases it the moment the
+owning process exits, so a crashed/leftover process can't block or be missed).
+Focusing the existing window uses a small localhost socket.
 
-A handshake banner is used so we don't mistake some other service on the port
-for our own instance.
+A second launch (e.g. a double-click or securevault:// link while the app is in
+the tray) detects the running instance, asks it to come to the front, and exits
+instead of opening a duplicate (which would also collide on the autofill port).
 """
 import socket
 import threading
+import ctypes
+from ctypes import wintypes
 
 CONTROL_HOST = "127.0.0.1"
 CONTROL_PORT = 8766
 BANNER = b"SECUREVAULT\n"
 FOCUS = b"FOCUS\n"
 
+_MUTEX_NAME = "Local\\SecureVault_SingleInstance"
+_ERROR_ALREADY_EXISTS = 183
+_mutex_handle = None  # kept for the process lifetime so the mutex isn't released
 
-def try_signal_focus(timeout=0.6):
-    """Returns True if a running instance was found and told to focus."""
+
+def already_running():
+    """True if another instance of this app already holds the singleton mutex."""
+    global _mutex_handle
+    try:
+        k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        k32.CreateMutexW.restype = wintypes.HANDLE
+        k32.CreateMutexW.argtypes = [wintypes.LPVOID, wintypes.BOOL, wintypes.LPCWSTR]
+        _mutex_handle = k32.CreateMutexW(None, False, _MUTEX_NAME)
+        return ctypes.get_last_error() == _ERROR_ALREADY_EXISTS
+    except Exception:
+        return False
+
+
+def signal_focus(timeout=1.0):
+    """Best-effort: tell the running instance to restore/focus its window."""
     try:
         with socket.create_connection((CONTROL_HOST, CONTROL_PORT), timeout=timeout) as s:
             s.settimeout(timeout)
             hello = s.recv(len(BANNER))
             if not hello.startswith(b"SECUREVAULT"):
-                return False  # something else is on this port
+                return False
             s.sendall(FOCUS)
             return True
     except OSError:

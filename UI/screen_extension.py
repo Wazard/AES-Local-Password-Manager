@@ -1,4 +1,4 @@
-"""Settings screen for the browser-extension autofill bridge."""
+"""Settings screen (autofill bridge, browser launch, anti-tamper)."""
 import webbrowser
 import customtkinter as ctk
 
@@ -15,21 +15,25 @@ class ExtensionMixin:
         self.current_view = "extension"
         self.clear_screen()
         back_button(self)
-        ctk.CTkLabel(self.container, text=self.t("extension.title"),
+
+        scroll = ctk.CTkScrollableFrame(self.container, fg_color="transparent")
+        scroll.pack(fill="both", expand=True, padx=4)
+
+        ctk.CTkLabel(scroll, text=self.t("extension.title"),
                      font=(FONT_FAMILY, 22, "bold")).pack(pady=(0, 10))
 
         # Featured link to the published add-on.
         addon_icon = (icons.load_tinted("extension.png", 18, COLOR_CHARCOAL)
                       if icons.exists("extension.png") else None)
-        ctk.CTkButton(self.container, text=self.t("extension.get_addon"), image=addon_icon,
+        ctk.CTkButton(scroll, text=self.t("extension.get_addon"), image=addon_icon,
                       fg_color=COLOR_GOLD, hover_color=COLOR_GOLD_HOVER,
                       text_color=COLOR_CHARCOAL, height=36,
                       command=lambda: webbrowser.open(ADDON_URL)).pack(pady=(0, 14))
 
-        card = ctk.CTkFrame(self.container, fg_color=COLOR_BG_CARD, corner_radius=12)
-        card.pack(fill="x", padx=30)
+        card = ctk.CTkFrame(scroll, fg_color=COLOR_BG_CARD, corner_radius=12)
+        card.pack(fill="x", padx=26)
 
-        # Enable toggle + status
+        # Enable toggle + status (this also enables browser-launch automatically)
         ctk.CTkCheckBox(card, text=self.t("extension.enable"),
                         variable=self.ext_enabled, command=self.toggle_extension
                         ).pack(anchor="w", padx=16, pady=(16, 6))
@@ -60,16 +64,16 @@ class ExtensionMixin:
         ctk.CTkButton(card, text=self.t("extension.regenerate"), height=34,
                       command=self.regenerate_token).pack(anchor="w", padx=16, pady=(0, 16))
 
-        # Browser launch (securevault:// protocol) so the extension can open/focus the app.
-        launch_card = ctk.CTkFrame(self.container, fg_color=COLOR_BG_CARD, corner_radius=12)
-        launch_card.pack(fill="x", padx=30, pady=(14, 0))
-        ctk.CTkCheckBox(launch_card, text=self.t("extension.launch"),
-                        variable=self.protocol_enabled, command=self.toggle_protocol
+        # Anti-tamper protection (opt-in).
+        security_card = ctk.CTkFrame(scroll, fg_color=COLOR_BG_CARD, corner_radius=12)
+        security_card.pack(fill="x", padx=26, pady=(14, 0))
+        ctk.CTkCheckBox(security_card, text=self.t("extension.tamper"),
+                        variable=self.tamper_enabled, command=self.toggle_tamper
                         ).pack(anchor="w", padx=16, pady=16)
 
-        ctk.CTkLabel(self.container, text=self.t("extension.hint", port=self.ext_port),
+        ctk.CTkLabel(scroll, text=self.t("extension.hint", port=self.ext_port),
                      font=(FONT_FAMILY, 11), text_color=COLOR_MUTED,
-                     wraplength=420, justify="left").pack(padx=34, pady=(14, 0), anchor="w")
-        ctk.CTkLabel(self.container, text=self.t("extension.launch_hint"),
+                     wraplength=420, justify="left").pack(padx=30, pady=(14, 0), anchor="w")
+        ctk.CTkLabel(scroll, text=self.t("extension.tamper_hint"),
                      font=(FONT_FAMILY, 11), text_color=COLOR_MUTED,
-                     wraplength=420, justify="left").pack(padx=34, pady=(8, 16), anchor="w")
+                     wraplength=420, justify="left").pack(padx=30, pady=(4, 16), anchor="w")
