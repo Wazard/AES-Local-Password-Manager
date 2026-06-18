@@ -16,17 +16,21 @@ origins, so a website can't read your vault even if it guesses the port.
 
 ## Setup
 
-1. **In the Secure Vault app**: open the **⚙ Extension** screen (top bar of the
+1. ~**In the Secure Vault app**: open the **⚙ Extension** screen (top bar of the
    Accounts page) and tick **Enable autofill server**. Note the **port** and
-   **pairing token** shown there.
-2. **Give your accounts a URL**: edit each account and fill in the *Website URL*
-   field (e.g. `github.com`) so the add-on can match it to a page.
-3. **Load the add-on in Firefox** (temporary, for development):
-   - Go to `about:debugging#/runtime/this-firefox`
-   - Click **Load Temporary Add-on…**
-   - Select `extension/firefox/manifest.json`
-4. **Pair it**: click the add-on's toolbar icon → it will prompt you to open
-   options. Paste the **port** and **token** from step 1 and click **Save**.
+   **pairing token** shown there.~
+2. ~**Give your accounts a URL**: edit each account and fill in the *Website URL*
+   field (e.g. `github.com`) so the add-on can match it to a page.~
+3. ~**Load the add-on in Firefox** (temporary, for development):~
+   ~- Go to `about:debugging#/runtime/this-firefox`~
+   ~- Click **Load Temporary Add-on…**~
+   ~- Select `extension/firefox/manifest.json`~
+~4. **Pair it**: click the add-on's toolbar icon → it will prompt you to open
+   options. Paste the **port** and **token** from step 1 and click **Save**.~
+
+
+**NEW**:
+Firefox Add-on has been approved, you can find it [here](https://addons.mozilla.org/en-US/firefox/addon/securevault/)
 
 ## Use
 
@@ -41,21 +45,6 @@ The add-on works proactively on any page with a login form:
   offers to store it in your vault.
 - **Unlock** — if the app is closed or locked, a prompt reminds you to open and
   log in to Secure Vault.
-
-### Opening the app from the browser
-
-If the app is closed or locked when you ask to generate or save, the extension
-will open/focus it via a `securevault://` link. To enable this:
-
-1. In the app: **⚙ Extension → Allow the browser to open this app**.
-2. The first time a `securevault://` link fires, Firefox asks for confirmation —
-   allow it (and optionally tick "remember").
-
-Then: pressing **Generate** (or **Save**) when the app isn't ready opens/focuses
-it on the login screen; once you log in, the password fills / saves
-automatically. If the app is already running and unlocked, it just works with no
-launch. (The launcher points at whatever copy of the app registered it, so
-re-toggle it if you move from the dev script to the built `.exe`.)
 
 ### Muting suggestions
 
