@@ -44,7 +44,7 @@ which is outside the scope of a user-space password manager.
 
 ## Firefox extension
 
-The companion extension in [`extension/firefox`](extension/firefox) fills and
+The companion extension ~in [`extension/firefox`](extension/firefox)~ (now approved and can be found [here](https://addons.mozilla.org/en-US/firefox/addon/securevault/)) fills and
 saves credentials by talking to the running app on `127.0.0.1`. It never
 contacts a remote server. See [`extension/README.md`](extension/README.md) for
 setup, pairing, and usage.
