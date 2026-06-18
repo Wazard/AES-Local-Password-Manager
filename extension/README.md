@@ -16,16 +16,16 @@ origins, so a website can't read your vault even if it guesses the port.
 
 ## Setup
 
-1. ~**In the Secure Vault app**: open the **⚙ Extension** screen (top bar of the
+1. ~**In the Secure Vault app**: open the **Extension** screen (top bar of the
    Accounts page) and tick **Enable autofill server**. Note the **port** and
    **pairing token** shown there.~
 2. ~**Give your accounts a URL**: edit each account and fill in the *Website URL*
    field (e.g. `github.com`) so the add-on can match it to a page.~
 3. ~**Load the add-on in Firefox** (temporary, for development):~
-   ~- Go to `about:debugging#/runtime/this-firefox`~
-   ~- Click **Load Temporary Add-on…**~
-   ~- Select `extension/firefox/manifest.json`~
-~4. **Pair it**: click the add-on's toolbar icon → it will prompt you to open
+   - ~Go to `about:debugging#/runtime/this-firefox`~
+   - ~Click **Load Temporary Add-on…**~
+   - ~Select `extension/firefox/manifest.json`~
+4. ~**Pair it**: click the add-on's toolbar icon → it will prompt you to open
    options. Paste the **port** and **token** from step 1 and click **Save**.~
 
 
