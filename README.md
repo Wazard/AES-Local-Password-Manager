@@ -64,26 +64,6 @@ On first launch, the master password you enter creates a new local vault
 (`vault.pwmanager`, stored under `%APPDATA%\SecureVault` so it keeps working
 even when the app is installed in a read-only location).
 
-## Building the installer
-
-`build.ps1` compiles the app into a standalone folder build with Nuitka, then
-packages it into a per-user Windows installer with Inno Setup:
-
-```
-.\build.ps1
-```
-
-This produces `installer\SecureVaultSetup.exe`. It requires
-[Inno Setup](https://jrsoftware.org/isdl.php) on the `PATH` (or set `$env:ISCC`
-to `ISCC.exe`); a folder build is used rather than `--onefile` because it trips
-far fewer antivirus heuristics.
-
-To deploy the folder build locally without producing a setup `.exe`, run
-`install.ps1` — it copies the most recent `main.dist\` into
-`%LOCALAPPDATA%\Programs\SecureVault`, adds Start Menu and Desktop shortcuts,
-and writes a matching uninstaller. A prebuilt installer is also on the releases
-tab.
-
 ## Tech stack
 
 - Python 3.11, CustomTkinter — interface
