@@ -26,6 +26,7 @@ innosetup-*.exe
 *.pwmanager
 *.pwmanager.tmp
 extension_config.json
+vault_location.json
 debug_log.txt
 github.txt
 
@@ -34,3 +35,7 @@ sv_backup_result.json
 sec_*.py
 *.ps1
 *.iss
+# ...except the build tooling: installer.iss carries the AppId that makes
+# installs upgrade in place instead of stacking up, so it must not be lost.
+!build.ps1
+!installer.iss

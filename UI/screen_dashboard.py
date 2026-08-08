@@ -1,11 +1,12 @@
 """Accounts dashboard: search, sort, and a grid/list view toggle."""
 import customtkinter as ctk
 
-from core import data_handler
 from UI import icons
 from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER, COLOR_STEEL,
                       COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED, COLOR_GOLD,
                       COLOR_DANGER, COLOR_DANGER_HOVER)
+
+SEARCH_DEBOUNCE_MS = 120  # settle time after the last keystroke before redrawing
 
 
 class DashboardMixin:
@@ -14,6 +15,8 @@ class DashboardMixin:
         self.logged_in = True
         self.start_security_timers()
         self.clear_screen()
+        self._search_after = None
+        self._rendered = None  # nothing drawn yet: the first render can't be skipped
 
         # --- Top toolbar: view toggle (left) + logout (right) ---
         topbar = ctk.CTkFrame(self.container, fg_color="transparent")
@@ -93,8 +96,18 @@ class DashboardMixin:
                       command=self.show_gen_pass_screen).pack(side="left", expand=True, padx=5)
 
     def _on_search(self, _event=None):
+        """Redraw shortly after the last keystroke rather than on each one:
+        rebuilding the cards is the slow part, and mid-word results are thrown
+        away as fast as they are drawn."""
         self.search_query = self.search_entry.get()
-        self._render_accounts()
+        if self._search_after is not None:
+            self.after_cancel(self._search_after)
+        self._search_after = self.after(SEARCH_DEBOUNCE_MS, self._apply_search)
+
+    def _apply_search(self):
+        self._search_after = None
+        if self.current_view == "dashboard":  # the screen may have changed since
+            self._render_accounts()
 
     def _on_sort_change(self, label):
         self.sort_mode = self.sort_label_to_mode.get(label, "name_asc")
@@ -133,6 +146,17 @@ class DashboardMixin:
 
     def _render_accounts(self):
         """(Re)draws the filtered + sorted accounts in the current view mode."""
+        services = (self.search_cache.services(
+            self.vault_data, self.vault_revision, self.search_query, self.sort_mode)
+            if self.vault_data else [])
+
+        # Typing "gith", "githu", "github" usually lands on the same accounts;
+        # redrawing every card each time is the expensive part, so don't.
+        state = (self.vault_revision, self.view_mode, tuple(services))
+        if state == self._rendered:
+            return
+        self._rendered = state
+
         for widget in self.dash_scroll.winfo_children():
             widget.destroy()
 
@@ -144,8 +168,6 @@ class DashboardMixin:
                           command=self.show_add_screen).pack()
             return
 
-        services = data_handler.visible_services(
-            self.vault_data, self.search_query, self.sort_mode)
         if not services:
             ctk.CTkLabel(self.dash_scroll, text=self.t("dashboard.no_results"),
                          font=(FONT_FAMILY, 16), text_color=COLOR_MUTED).pack(pady=60)

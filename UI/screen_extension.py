@@ -2,6 +2,7 @@
 import webbrowser
 import customtkinter as ctk
 
+from core import version
 from UI import icons
 from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_SUCCESS, COLOR_MUTED,
                       COLOR_GOLD, COLOR_GOLD_HOVER, COLOR_CHARCOAL)
@@ -77,3 +78,12 @@ class ExtensionMixin:
         ctk.CTkLabel(scroll, text=self.t("extension.tamper_hint"),
                      font=(FONT_FAMILY, 11), text_color=COLOR_MUTED,
                      wraplength=420, justify="left").pack(padx=30, pady=(4, 16), anchor="w")
+
+        # Which version is installed — the answer to "did the update take?"
+        about = ctk.CTkFrame(scroll, fg_color=COLOR_BG_CARD, corner_radius=12)
+        about.pack(fill="x", padx=26, pady=(0, 6))
+        ctk.CTkLabel(about, text=self.t("extension.version"),
+                     font=(FONT_FAMILY, 12, "bold")).pack(anchor="w", padx=16, pady=(14, 0))
+        ctk.CTkLabel(about, text="Secure Vault " + version.VERSION,
+                     font=("Courier New", 13), text_color=COLOR_MUTED
+                     ).pack(anchor="w", padx=16, pady=(2, 14))

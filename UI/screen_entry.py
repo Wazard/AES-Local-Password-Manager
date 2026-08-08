@@ -29,8 +29,7 @@ class EntryMixin:
         acc_entry = ctk.CTkEntry(form, height=38)
         acc_entry.pack(fill="x", pady=(2, 15))
         if edit_service:
-            acc_entry.insert(0, edit_service)
-            acc_entry.configure(state="disabled")
+            acc_entry.insert(0, edit_service)  # editable: the name can be corrected
 
         ctk.CTkLabel(form, text=self.t("forms.username"), font=(FONT_FAMILY, 12, "bold")).pack(anchor="w")
         user_entry = ctk.CTkEntry(form, height=38)
@@ -61,6 +60,14 @@ class EntryMixin:
             service = acc_entry.get().strip()
             if not service:
                 return
+            if edit_service and service != edit_service:
+                # Renaming: keep the entry where it is in the vault instead of
+                # dropping the old key and appending a new one.
+                if not data_handler.rename_entry(self.vault_data, edit_service, service):
+                    messagebox.showerror(self.t("forms.rename_failed_title"),
+                                         self.t("forms.rename_failed", service=service))
+                    return
+                self.active_service = service
             existing = self.vault_data.get(service, {})
             self.vault_data[service] = {
                 "user": user_entry.get(),

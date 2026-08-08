@@ -1,16 +1,17 @@
-"""Screen to back up the encrypted vault to OneDrive or a custom folder.
+"""Backup screen: where the dated copies go, and restoring one.
 
-Creating/removing the symlink needs admin rights; when the app isn't elevated
-we relaunch the single operation via UAC and poll for its result.
+Backups are plain encrypted copies (see core/backup.py), so this screen only
+ever moves files around — no elevation, no symlinks, nothing that can leave the
+vault in a half-configured state.
 """
 import os
-import shutil
+import time
 import customtkinter as ctk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
-from core import backup, storage_handler, elevation
-from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_SUCCESS, COLOR_SUCCESS_HOVER,
-                      COLOR_DANGER, COLOR_DANGER_HOVER, COLOR_MUTED)
+from core import backup, storage_handler
+from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER, COLOR_SUCCESS,
+                      COLOR_SUCCESS_HOVER, COLOR_DANGER, COLOR_DANGER_HOVER, COLOR_MUTED)
 from UI.components import back_button
 
 
@@ -20,128 +21,99 @@ class BackupMixin:
         self.clear_screen()
         back_button(self)
         ctk.CTkLabel(self.container, text=self.t("backup.title"),
-                     font=(FONT_FAMILY, 22, "bold")).pack(pady=(0, 16))
+                     font=(FONT_FAMILY, 22, "bold")).pack(pady=(0, 12))
 
-        st = backup.status(storage_handler.VAULT_FILE)
+        folder = backup.backup_dir()
+        backups = backup.list_backups(folder)
+
         card = ctk.CTkFrame(self.container, fg_color=COLOR_BG_CARD, corner_radius=12)
-        card.pack(fill="x", padx=30)
+        card.pack(fill="x", padx=24)
+        ctk.CTkLabel(card, text=self.t("backup.folder_label"), font=(FONT_FAMILY, 13, "bold"),
+                     text_color=COLOR_SUCCESS).pack(anchor="w", padx=18, pady=(14, 0))
+        ctk.CTkLabel(card, text=folder, text_color=COLOR_MUTED, font=("Courier New", 11),
+                     wraplength=430, justify="left").pack(anchor="w", padx=18, pady=(2, 10))
 
-        if st["is_link"]:
-            ctk.CTkLabel(card, text=self.t("backup.linked"), text_color=COLOR_SUCCESS,
-                         font=(FONT_FAMILY, 13, "bold")).pack(anchor="w", padx=20, pady=(18, 0))
-            ctk.CTkLabel(card, text=st["target"], text_color=COLOR_MUTED,
-                         font=("Courier New", 11), wraplength=440,
-                         justify="left").pack(anchor="w", padx=20, pady=(2, 12))
-            ctk.CTkButton(card, text=self.t("backup.remove"), height=40,
-                          fg_color=COLOR_DANGER, hover_color=COLOR_DANGER_HOVER,
-                          command=self._do_remove_backup).pack(anchor="w", padx=20, pady=(0, 18))
-        else:
-            ctk.CTkLabel(card, text=self.t("backup.not_linked"), text_color=COLOR_MUTED,
-                         font=(FONT_FAMILY, 13)).pack(anchor="w", padx=20, pady=(18, 14))
-
-            row = ctk.CTkFrame(card, fg_color="transparent")
-            row.pack(fill="x", padx=20, pady=(0, 18))
-            if st["onedrive"]:
-                ctk.CTkButton(row, text=self.t("backup.create"), height=46,
-                              fg_color=COLOR_SUCCESS, hover_color=COLOR_SUCCESS_HOVER,
-                              command=lambda: self._create_at(st["onedrive"])
-                              ).pack(side="left", expand=True, fill="x")
-                ctk.CTkLabel(row, text=self.t("backup.or"), text_color=COLOR_MUTED,
-                             font=(FONT_FAMILY, 12, "bold")).pack(side="left", padx=14)
-            ctk.CTkButton(row, text=self.t("backup.choose"), height=46,
-                          command=self._choose_custom).pack(side="left", expand=True, fill="x")
-
-            if not st["onedrive"]:
-                ctk.CTkLabel(card, text=self.t("backup.no_onedrive"), text_color=COLOR_MUTED,
-                             wraplength=440, justify="left").pack(anchor="w", padx=20, pady=(0, 14))
+        row = ctk.CTkFrame(card, fg_color="transparent")
+        row.pack(fill="x", padx=18, pady=(0, 16))
+        ctk.CTkButton(row, text=self.t("backup.now"), height=38,
+                      fg_color=COLOR_SUCCESS, hover_color=COLOR_SUCCESS_HOVER,
+                      command=self._backup_now).pack(side="left", expand=True, fill="x")
+        ctk.CTkButton(row, text=self.t("backup.choose"), height=38,
+                      command=self._choose_folder).pack(side="left", expand=True,
+                                                        fill="x", padx=(10, 0))
 
         msg = getattr(self, "_backup_msg", "")
         if msg:
-            ctk.CTkLabel(self.container, text=msg, text_color=COLOR_MUTED,
-                         wraplength=460, justify="left").pack(padx=34, pady=(16, 0))
+            ctk.CTkLabel(self.container, text=msg, text_color=COLOR_MUTED, wraplength=460,
+                         justify="left").pack(padx=26, pady=(12, 0))
+
+        ctk.CTkLabel(self.container,
+                     text=self.t("backup.count", count=len(backups)) if backups
+                     else self.t("backup.none"),
+                     font=(FONT_FAMILY, 13, "bold")).pack(anchor="w", padx=26, pady=(16, 4))
+
+        listing = ctk.CTkScrollableFrame(self.container, fg_color="transparent")
+        listing.pack(fill="both", expand=True, padx=20, pady=(0, 6))
+        for entry in backups:
+            self._backup_row(listing, entry)
 
         ctk.CTkLabel(self.container, text=self.t("backup.hint"), text_color=COLOR_MUTED,
                      font=(FONT_FAMILY, 11), wraplength=460,
-                     justify="left").pack(padx=34, pady=18)
+                     justify="left").pack(padx=26, pady=(0, 14))
+
+    def _backup_row(self, parent, entry):
+        row = ctk.CTkFrame(parent, fg_color=COLOR_BG_CARD, corner_radius=10)
+        row.pack(fill="x", pady=4)
+
+        text = ctk.CTkFrame(row, fg_color="transparent")
+        text.pack(side="left", fill="x", expand=True, padx=(14, 6), pady=8)
+        ctk.CTkLabel(text, text=self._when(entry["when"]), font=(FONT_FAMILY, 13),
+                     anchor="w").pack(anchor="w")
+        ctk.CTkLabel(text, text="%s · %.1f KB" % (entry["name"], entry["size"] / 1024.0),
+                     font=("Courier New", 10), text_color=COLOR_MUTED,
+                     anchor="w").pack(anchor="w")
+
+        ctk.CTkButton(row, text=self.t("backup.delete"), width=70, height=30,
+                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
+                      text_color=COLOR_DANGER,
+                      command=lambda: self._delete(entry)).pack(side="right", padx=(0, 10))
+        ctk.CTkButton(row, text=self.t("backup.restore"), width=80, height=30,
+                      fg_color=COLOR_SUCCESS, hover_color=COLOR_SUCCESS_HOVER,
+                      command=lambda: self._restore(entry)).pack(side="right", padx=8)
+
+    @staticmethod
+    def _when(timestamp):
+        return time.strftime("%d/%m/%Y %H:%M", time.localtime(timestamp))
 
     # --- actions ---
-    def _vault_abs(self):
-        return os.path.abspath(storage_handler.VAULT_FILE)
+    def _backup_now(self):
+        path = backup.make_backup(storage_handler.vault_path())
+        self._backup_msg = (self.t("backup.done", name=os.path.basename(path)) if path
+                            else self.t("backup.failed"))
+        self.show_backup_screen()
 
-    def _choose_custom(self):
+    def _choose_folder(self):
         folder = filedialog.askdirectory(title=self.t("backup.choose"))
-        if folder:
-            self._create_at(folder)
-
-    def _create_at(self, base_dir):
-        vault = self._vault_abs()
-        # Admin or Developer Mode: create the link directly, in-process.
-        if elevation.is_admin() or backup.can_symlink():
-            ok, msg, _ = backup.create_link(vault, base_dir)
-            self._backup_msg = msg
-            self.show_backup_screen()
+        if not folder:
             return
-        # Otherwise: move the vault, then create the link via an elevated
-        # `mklink` — this is what shows the UAC "allow changes?" prompt.
-        ok, info = backup.prepare_link(vault, base_dir)
-        if not ok:
-            self._backup_msg = info
-            self.show_backup_screen()
-            return
-        target = info
-        if not elevation.run_elevated_cmd('mklink "%s" "%s"' % (vault, target)):
-            backup.rollback_link(vault, target)  # UAC declined / failed to start
-            self._backup_msg = self.t("backup.denied")
-            self.show_backup_screen()
-            return
-        self._backup_msg = self.t("backup.waiting")
-        self.show_backup_screen()
-        self._poll_link(target)
-
-    def _poll_link(self, target, tries=0):
-        if os.path.islink(self._vault_abs()):
-            self._backup_msg = ""
-            if self.current_view == "backup":
-                self.show_backup_screen()
-            return
-        if tries < 30 and self.current_view == "backup":  # ~15s
-            self.after(500, lambda: self._poll_link(target, tries + 1))
-        elif self.current_view == "backup":
-            backup.rollback_link(self._vault_abs(), target)
-            self._backup_msg = self.t("backup.denied")
-            self.show_backup_screen()
-
-    def _do_remove_backup(self):
-        vault = self._vault_abs()
-        if not os.path.islink(vault):
-            _, msg, _ = backup.remove_link(vault)
-            self._backup_msg = msg
-            self.show_backup_screen()
-            return
-        target = os.path.realpath(vault)
-        ok, msg, reason = backup.remove_link(vault)
-        if ok:
-            self._backup_msg = msg
-            self.show_backup_screen()
-            return
-        if reason == "permission" and not elevation.is_admin() and \
-                elevation.run_elevated_cmd('del "%s"' % vault):
-            self._poll_unlink(target)
-            return
-        self._backup_msg = msg
+        backup.set_backup_dir(folder)
+        self._backup_msg = ""
         self.show_backup_screen()
 
-    def _poll_unlink(self, target, tries=0):
-        vault = self._vault_abs()
-        if not os.path.lexists(vault):
-            if os.path.exists(target) and not os.path.exists(vault):
-                try:
-                    shutil.copy2(target, vault)
-                except OSError:
-                    pass
-            self._backup_msg = ""
-            if self.current_view == "backup":
-                self.show_backup_screen()
+    def _restore(self, entry):
+        if not messagebox.askyesno(self.t("backup.title"),
+                                   self.t("backup.restore_confirm",
+                                          when=self._when(entry["when"]))):
             return
-        if tries < 30 and self.current_view == "backup":
-            self.after(500, lambda: self._poll_unlink(target, tries + 1))
+        self._backup_msg = ""
+        # Sends the user back to the login screen: the restored copy may have a
+        # different master password from the session that is open now.
+        self.restore_backup(entry["path"])
+
+    def _delete(self, entry):
+        if not messagebox.askyesno(self.t("backup.title"),
+                                   self.t("backup.delete_confirm",
+                                          when=self._when(entry["when"]))):
+            return
+        backup.delete_backup(entry["path"])
+        self.show_backup_screen()

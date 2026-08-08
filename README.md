@@ -19,8 +19,10 @@ localhost connection.
   switchable grid / list views.
 - **Firefox extension** — autofill, save-on-signup, and password generation,
   all over localhost.
-- **OneDrive backup** — optional symlink so the encrypted vault syncs as a
-  continuous backup.
+- **Dated backups** — a read-only encrypted copy on every change, named
+  `vault_bk_2026_08_08_1432_01.pwmanager` so the folder sorts chronologically,
+  kept in OneDrive when there is one, and restorable from inside the app.
+- **Editable account names** — renaming an account keeps its place in the vault.
 - **Auto-lock and tray** — re-locks after inactivity and can keep running in the
   system tray.
 - **Localisation** — English, Italian, French, and Danish.
@@ -60,9 +62,49 @@ pip install -r requirements.txt
 python main.py
 ```
 
-On first launch, the master password you enter creates a new local vault
-(`vault.pwmanager`, stored under `%APPDATA%\SecureVault` so it keeps working
-even when the app is installed in a read-only location).
+On first launch you choose to create a new vault; the master password you enter
+protects it. The vault (`vault.pwmanager`) starts under `%APPDATA%\SecureVault`,
+so it keeps working even when the app is installed in a read-only location.
+
+The vault file can live anywhere — another drive, a synced folder. Where it is
+gets recorded in `vault_location.json`. If you move the file, the app says so on
+the next launch and lets you point it at the new place; it never starts an empty
+vault on its own.
+
+## Building the installer
+
+Requires [Inno Setup](https://jrsoftware.org/isdl.php) (set `$env:ISCC` if it is
+installed somewhere unusual) and `pip install nuitka`.
+
+```
+.\build.ps1
+```
+
+That compiles `main.dist\` with Nuitka and packages it as
+`installer\SecureVaultSetup.exe`. A folder build is used rather than `--onefile`
+because it trips far fewer antivirus heuristics. `-SkipCompile` repackages an
+existing build. The version comes from [`core/version.py`](core/version.py)
+alone — bump it there and the exe metadata, the installer and the app's settings
+screen all follow.
+
+### Updating an existing install
+
+Run the new `SecureVaultSetup.exe`; it installs over the old version in place,
+keeping the same entry in Apps & features. What makes that work is the `AppId`
+GUID in [`installer.iss`](installer.iss) — Windows identifies an installed
+product by it, so **it must never change**, or an update becomes a second,
+parallel installation. A copy that was never installed by Setup (an unpacked
+`main.dist\`, say) is found via the app's own `securevault://` registration and
+offered as the destination, so it gets replaced rather than duplicated.
+
+Setup asks you to close Secure Vault first if it is running (including from the
+tray), because the app holds a named mutex while it runs and its files can't be
+replaced underneath it.
+
+Your data is never part of the install: the vault, its backups, the recorded
+vault location and the extension settings all live in `%APPDATA%\SecureVault`.
+Updating leaves them alone, and so does uninstalling — remove that folder by
+hand if you ever want the data gone.
 
 ## Tech stack
 

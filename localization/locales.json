@@ -53,7 +53,9 @@
       "password": "Password",
       "url": "Website URL (optional)",
       "generate": "GENERATE",
-      "save": "SAVE"
+      "save": "SAVE",
+      "rename_failed_title": "Rename",
+      "rename_failed": "An account called “{service}” already exists."
     },
     "extension": {
       "title": "SETTINGS",
@@ -68,21 +70,23 @@
       "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked.",
       "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only.",
       "tamper": "Lock instantly if a debugger attaches",
-      "tamper_hint": "Anti-tampering: instantly locks the vault if a debugger attaches to the app. Off by default; it may cause antivirus false positives."
+      "tamper_hint": "Anti-tampering: instantly locks the vault if a debugger attaches to the app. Off by default; it may cause antivirus false positives.",
+      "version": "Version"
     },
     "backup": {
       "title": "VAULT BACKUP",
-      "no_onedrive": "OneDrive was not found on this PC. Sign in to OneDrive and try again.",
-      "onedrive_found": "OneDrive folder",
-      "linked": "● Vault is backed up",
-      "not_linked": "Your vault is stored locally only.",
-      "create": "Back up to OneDrive Folder",
-      "remove": "Remove backup link",
-      "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator.",
-      "choose": "Back up to a custom folder…",
-      "waiting": "Waiting for permission…",
-      "denied": "Permission was denied.",
-      "or": "OR"
+      "folder_label": "Backups are kept in",
+      "choose": "Change folder…",
+      "now": "Back up now",
+      "none": "No backups yet.",
+      "count": "{count} backup(s), newest first",
+      "restore": "Restore",
+      "delete": "Delete",
+      "restore_confirm": "Replace your vault with the backup from {when}?\n\nThe vault as it is now is backed up first, and you will be asked to log in again.",
+      "delete_confirm": "Delete the backup from {when}?",
+      "done": "Backup created: {name}",
+      "failed": "Could not write a backup to that folder.",
+      "hint": "A copy is saved every time you add or change an account. Backups are encrypted with your master password, and read-only so they are not deleted by accident. The newest 20 are kept, plus one per day for the last 60 days. Pick a OneDrive folder to keep copies off this computer."
     },
     "details": {
       "username_label": "Username:",
@@ -104,9 +108,19 @@
       "copy": "COPY",
       "copied": "COPIED!"
     },
-    "import": {
-      "title": "Import vault",
-      "prompt": "Link to this file so it stays where it is (e.g. for OneDrive backup)?\n\nYes = Link    No = Move it here"
+    "vault": {
+      "missing_title": "Vault not found",
+      "missing_body": "Your accounts are safe — they are inside your vault file, which this app can no longer see. It was last used here:",
+      "new_title": "Welcome",
+      "new_body": "There is no vault on this computer yet. Create one, or open a vault file you already have.",
+      "locate_title": "Find your vault",
+      "locate_btn": "Find my vault file…",
+      "use_found_btn": "Use the vault found here",
+      "create_title": "New vault",
+      "create_btn": "Create a new vault",
+      "create_confirm": "Your existing vault will not be deleted, but this app will stop using it and start empty.\n\nCreate a new, empty vault anyway?",
+      "not_a_vault": "That does not look like a vault file.",
+      "back_btn": "Back"
     }
   },
   "it": {
@@ -163,7 +177,9 @@
       "password": "Password",
       "url": "URL del sito (facoltativo)",
       "generate": "GENERA",
-      "save": "SALVA"
+      "save": "SALVA",
+      "rename_failed_title": "Rinomina",
+      "rename_failed": "Esiste già un account chiamato “{service}”."
     },
     "extension": {
       "title": "IMPOSTAZIONI",
@@ -178,21 +194,23 @@
       "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato.",
       "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente.",
       "tamper": "Blocca subito se un debugger si collega",
-      "tamper_hint": "Anti-manomissione: blocca subito il vault se un debugger si collega all'app. Disattivato per impostazione predefinita; può causare falsi positivi negli antivirus."
+      "tamper_hint": "Anti-manomissione: blocca subito il vault se un debugger si collega all'app. Disattivato per impostazione predefinita; può causare falsi positivi negli antivirus.",
+      "version": "Versione"
     },
     "backup": {
       "title": "BACKUP VAULT",
-      "no_onedrive": "OneDrive non è stato trovato su questo PC. Accedi a OneDrive e riprova.",
-      "onedrive_found": "Cartella OneDrive",
-      "linked": "● Il vault è salvato",
-      "not_linked": "Il tuo vault è memorizzato solo localmente.",
-      "create": "Backup nella cartella OneDrive",
-      "remove": "Rimuovi collegamento di backup",
-      "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore.",
-      "choose": "Backup in una cartella personalizzata…",
-      "waiting": "In attesa dell'autorizzazione…",
-      "denied": "Autorizzazione negata.",
-      "or": "OPPURE"
+      "folder_label": "I backup sono salvati in",
+      "choose": "Cambia cartella…",
+      "now": "Esegui backup ora",
+      "none": "Ancora nessun backup.",
+      "count": "{count} backup, dal più recente",
+      "restore": "Ripristina",
+      "delete": "Elimina",
+      "restore_confirm": "Sostituire il vault con il backup del {when}?\n\nIl vault attuale viene salvato prima, e ti verrà chiesto di accedere di nuovo.",
+      "delete_confirm": "Eliminare il backup del {when}?",
+      "done": "Backup creato: {name}",
+      "failed": "Impossibile scrivere un backup in quella cartella.",
+      "hint": "Una copia viene salvata ogni volta che aggiungi o modifichi un account. I backup sono cifrati con la tua password maestra e in sola lettura, per non eliminarli per sbaglio. Vengono conservati i 20 più recenti, più uno al giorno per gli ultimi 60 giorni. Scegli una cartella OneDrive per tenere le copie fuori da questo computer."
     },
     "details": {
       "username_label": "Nome utente:",
@@ -214,9 +232,19 @@
       "copy": "COPIA",
       "copied": "COPIATA!"
     },
-    "import": {
-      "title": "Importa vault",
-      "prompt": "Collegare questo file lasciandolo dov'è (es. per il backup OneDrive)?\n\nSì = Collega    No = Sposta qui"
+    "vault": {
+      "missing_title": "Vault non trovato",
+      "missing_body": "I tuoi account sono al sicuro: sono dentro il file del vault, che l'app non riesce più a vedere. L'ultima posizione usata è:",
+      "new_title": "Benvenuto",
+      "new_body": "Non c'è ancora un vault su questo computer. Creane uno oppure apri un file vault che hai già.",
+      "locate_title": "Trova il tuo vault",
+      "locate_btn": "Cerca il file del vault…",
+      "use_found_btn": "Usa il vault trovato qui",
+      "create_title": "Nuovo vault",
+      "create_btn": "Crea un nuovo vault",
+      "create_confirm": "Il vault esistente non verrà eliminato, ma l'app smetterà di usarlo e ripartirà da vuota.\n\nCreare comunque un nuovo vault vuoto?",
+      "not_a_vault": "Questo file non sembra un file vault.",
+      "back_btn": "Indietro"
     }
   },
   "fr": {
@@ -273,7 +301,9 @@
       "password": "Mot de passe",
       "url": "URL du site (facultatif)",
       "generate": "GÉNÉRER",
-      "save": "ENREGISTRER"
+      "save": "ENREGISTRER",
+      "rename_failed_title": "Renommer",
+      "rename_failed": "Un compte nommé « {service} » existe déjà."
     },
     "extension": {
       "title": "PARAMÈTRES",
@@ -288,21 +318,23 @@
       "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé.",
       "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement.",
       "tamper": "Verrouiller si un débogueur s'attache",
-      "tamper_hint": "Anti-altération : verrouille immédiatement le coffre si un débogueur s'attache à l'application. Désactivé par défaut ; peut provoquer des faux positifs antivirus."
+      "tamper_hint": "Anti-altération : verrouille immédiatement le coffre si un débogueur s'attache à l'application. Désactivé par défaut ; peut provoquer des faux positifs antivirus.",
+      "version": "Version"
     },
     "backup": {
       "title": "SAUVEGARDE DU COFFRE",
-      "no_onedrive": "OneDrive est introuvable sur ce PC. Connectez-vous à OneDrive et réessayez.",
-      "onedrive_found": "Dossier OneDrive",
-      "linked": "● Le coffre est sauvegardé",
-      "not_linked": "Votre coffre est stocké localement uniquement.",
-      "create": "Sauvegarder dans le dossier OneDrive",
-      "remove": "Supprimer le lien de sauvegarde",
-      "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur.",
-      "choose": "Sauvegarder dans un dossier personnalisé…",
-      "waiting": "En attente de l'autorisation…",
-      "denied": "Autorisation refusée.",
-      "or": "OU"
+      "folder_label": "Les sauvegardes sont conservées dans",
+      "choose": "Changer de dossier…",
+      "now": "Sauvegarder maintenant",
+      "none": "Aucune sauvegarde pour l'instant.",
+      "count": "{count} sauvegarde(s), de la plus récente",
+      "restore": "Restaurer",
+      "delete": "Supprimer",
+      "restore_confirm": "Remplacer votre coffre par la sauvegarde du {when} ?\n\nLe coffre actuel est sauvegardé d'abord, et il vous sera demandé de vous reconnecter.",
+      "delete_confirm": "Supprimer la sauvegarde du {when} ?",
+      "done": "Sauvegarde créée : {name}",
+      "failed": "Impossible d'écrire une sauvegarde dans ce dossier.",
+      "hint": "Une copie est enregistrée à chaque ajout ou modification d'un compte. Les sauvegardes sont chiffrées avec votre mot de passe maître et en lecture seule, pour ne pas être supprimées par accident. Les 20 plus récentes sont conservées, plus une par jour pour les 60 derniers jours. Choisissez un dossier OneDrive pour garder des copies hors de cet ordinateur."
     },
     "details": {
       "username_label": "Nom d'utilisateur :",
@@ -324,9 +356,19 @@
       "copy": "COPIER",
       "copied": "COPIÉ !"
     },
-    "import": {
-      "title": "Importer le coffre",
-      "prompt": "Lier ce fichier pour le laisser où il est (p. ex. pour la sauvegarde OneDrive)?\n\nOui = Lier    Non = Déplacer ici"
+    "vault": {
+      "missing_title": "Coffre introuvable",
+      "missing_body": "Vos comptes sont en sécurité : ils sont dans votre fichier de coffre, que l'application ne voit plus. Dernier emplacement utilisé :",
+      "new_title": "Bienvenue",
+      "new_body": "Il n'y a pas encore de coffre sur cet ordinateur. Créez-en un, ou ouvrez un fichier de coffre existant.",
+      "locate_title": "Trouver votre coffre",
+      "locate_btn": "Chercher mon fichier de coffre…",
+      "use_found_btn": "Utiliser le coffre trouvé ici",
+      "create_title": "Nouveau coffre",
+      "create_btn": "Créer un nouveau coffre",
+      "create_confirm": "Votre coffre existant ne sera pas supprimé, mais l'application cessera de l'utiliser et repartira à vide.\n\nCréer quand même un nouveau coffre vide ?",
+      "not_a_vault": "Ce fichier ne ressemble pas à un fichier de coffre.",
+      "back_btn": "Retour"
     }
   },
   "da": {
@@ -383,7 +425,9 @@
       "password": "Adgangskode",
       "url": "Websted-URL (valgfri)",
       "generate": "GENERER",
-      "save": "GEM"
+      "save": "GEM",
+      "rename_failed_title": "Omdøb",
+      "rename_failed": "Der findes allerede en konto ved navn “{service}”."
     },
     "extension": {
       "title": "INDSTILLINGER",
@@ -398,21 +442,23 @@
       "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op.",
       "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger.",
       "tamper": "Lås straks hvis en debugger tilknyttes",
-      "tamper_hint": "Anti-manipulation: låser straks boksen, hvis en debugger tilknyttes appen. Slået fra som standard; kan udløse falske antivirus-alarmer."
+      "tamper_hint": "Anti-manipulation: låser straks boksen, hvis en debugger tilknyttes appen. Slået fra som standard; kan udløse falske antivirus-alarmer.",
+      "version": "Version"
     },
     "backup": {
       "title": "BACKUP AF BOKS",
-      "no_onedrive": "OneDrive blev ikke fundet på denne pc. Log ind på OneDrive, og prøv igen.",
-      "onedrive_found": "OneDrive-mappe",
-      "linked": "● Boksen er sikkerhedskopieret",
-      "not_linked": "Din boks gemmes kun lokalt.",
-      "create": "Sikkerhedskopiér til OneDrive-mappen",
-      "remove": "Fjern backup-link",
-      "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator.",
-      "choose": "Sikkerhedskopiér til en valgfri mappe…",
-      "waiting": "Venter på tilladelse…",
-      "denied": "Tilladelse blev nægtet.",
-      "or": "ELLER"
+      "folder_label": "Backups gemmes i",
+      "choose": "Skift mappe…",
+      "now": "Tag backup nu",
+      "none": "Ingen backups endnu.",
+      "count": "{count} backups, nyeste først",
+      "restore": "Gendan",
+      "delete": "Slet",
+      "restore_confirm": "Erstat din boks med backuppen fra {when}?\n\nBoksen, som den er nu, sikkerhedskopieres først, og du bliver bedt om at logge ind igen.",
+      "delete_confirm": "Slet backuppen fra {when}?",
+      "done": "Backup oprettet: {name}",
+      "failed": "Kunne ikke skrive en backup til den mappe.",
+      "hint": "Der gemmes en kopi, hver gang du tilføjer eller ændrer en konto. Backups er krypteret med din hovedadgangskode og skrivebeskyttede, så de ikke slettes ved et uheld. De 20 nyeste beholdes, plus én om dagen de sidste 60 dage. Vælg en OneDrive-mappe for at holde kopier væk fra denne computer."
     },
     "details": {
       "username_label": "Brugernavn:",
@@ -434,9 +480,19 @@
       "copy": "KOPIÉR",
       "copied": "KOPIERET!"
     },
-    "import": {
-      "title": "Importér boks",
-      "prompt": "Link til denne fil, så den bliver, hvor den er (f.eks. til OneDrive-backup)?\n\nJa = Link    Nej = Flyt hertil"
+    "vault": {
+      "missing_title": "Boksen blev ikke fundet",
+      "missing_body": "Dine konti er i sikkerhed — de ligger i din boksfil, som appen ikke længere kan se. Den blev sidst brugt her:",
+      "new_title": "Velkommen",
+      "new_body": "Der er endnu ingen boks på denne computer. Opret en, eller åbn en boksfil, du allerede har.",
+      "locate_title": "Find din boks",
+      "locate_btn": "Find min boksfil…",
+      "use_found_btn": "Brug boksen fundet her",
+      "create_title": "Ny boks",
+      "create_btn": "Opret en ny boks",
+      "create_confirm": "Din eksisterende boks bliver ikke slettet, men appen holder op med at bruge den og starter tom.\n\nOpret alligevel en ny, tom boks?",
+      "not_a_vault": "Filen ligner ikke en boksfil.",
+      "back_btn": "Tilbage"
     }
   }
 }
