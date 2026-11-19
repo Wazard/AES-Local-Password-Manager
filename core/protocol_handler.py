@@ -8,10 +8,30 @@ _BASE = r"Software\Classes\\" + PROTOCOL
 _CMD_KEY = _BASE + r"\shell\open\command"
 
 
+def _running_exe():
+    """The exe this process was started from.
+
+    Not `sys.executable`: in a Nuitka standalone build that is deliberately set
+    to "python.exe" in the program's folder — a file that does not exist there,
+    kept for code that spawns a Python subprocess. Registering it left every
+    securevault:// link pointing at nothing. Windows knows which file the
+    process is actually running from, so ask it.
+    """
+    try:
+        import ctypes
+        buf = ctypes.create_unicode_buffer(32768)
+        length = ctypes.windll.kernel32.GetModuleFileNameW(None, buf, len(buf))
+        if length:
+            return buf.value
+    except Exception:
+        pass
+    return os.path.abspath(sys.argv[0])
+
+
 def _launch_command():
     """The command Windows runs for securevault:// links (with the URL as %1)."""
     if getattr(sys, "frozen", False) or "__compiled__" in globals():
-        return f'"{sys.executable}" "%1"'
+        return f'"{_running_exe()}" "%1"'
     main_py = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "main.py"))
     return f'"{sys.executable}" "{main_py}" "%1"'
 
