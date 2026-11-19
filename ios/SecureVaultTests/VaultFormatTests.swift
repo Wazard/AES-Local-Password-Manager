@@ -141,8 +141,14 @@ final class VaultFormatTests: XCTestCase {
             XCTAssertTrue(p.contains { $0.isNumber })
             XCTAssertFalse(p.contains { PasswordGenerator.symbols.contains($0) })
         }
-        let grouped = PasswordGenerator.generate(length: 18, grouped: true)
-        XCTAssertEqual(grouped.split(separator: "-").map(\.count), [6, 6, 6])
+        // "-" is also one of the symbols, so check where the separators sit
+        // rather than splitting on it.
+        for _ in 0..<50 {
+            let grouped = Array(PasswordGenerator.generate(length: 18, grouped: true))
+            XCTAssertEqual(grouped.count, 20)
+            XCTAssertEqual(grouped[6], "-")
+            XCTAssertEqual(grouped[13], "-")
+        }
     }
 
     /// The same cases ios/tools/check_search.py runs against the desktop search.
