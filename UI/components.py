@@ -343,6 +343,15 @@ def secret_field(parent, value="", placeholder="", readonly=False, mono=True,
     btn.configure(command=lambda: show(not state["shown"]),
                   fg_color=T.SECONDARY, hover_color=T.SECONDARY_HOVER)
     btn.pack(side="left", padx=(T.GAP_S, 0))
+
+    def remask(_event=None):
+        # CTkEntry turns masking off while its placeholder shows and restores
+        # it on focus from a saved copy; don't trust that copy with a secret.
+        # Runs after CTkEntry's own FocusIn handler (bound first).
+        if not getattr(entry, "_placeholder_text_active", False):
+            entry._entry.configure(show="" if state["shown"] else "•")
+
+    entry.bind("<FocusIn>", remask, add="+")
     if reveal is not None:
         unload()
         if not readonly:
@@ -357,6 +366,11 @@ def secret_field(parent, value="", placeholder="", readonly=False, mono=True,
 def set_text(entry, value):
     """Replace an entry's text, read-only ones included (a kept screen
     refills its fields on every visit)."""
+    if not value and getattr(entry, "_placeholder_text_active", False):
+        # Already empty, showing its placeholder. Re-activating the placeholder
+        # would make CTkEntry save its current, placeholder-time `show` ("") over
+        # the real one — which is how a password field ended up unmasked.
+        return
     readonly = entry.cget("state") == "readonly"
     if readonly:
         entry.configure(state="normal")
