@@ -40,3 +40,8 @@ sec_*.py
 !build.ps1
 !installer.iss
 installer.iss.bak
+
+# --- iOS (the Xcode project is generated from ios/project.yml) ---
+ios/*.xcodeproj/
+ios/build/
+*.ipa

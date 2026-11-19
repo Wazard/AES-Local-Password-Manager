@@ -1,0 +1,41 @@
+{
+ "password": "correct horse battery staple",
+ "order": [
+  "GitHub",
+  "Café ☕",
+  "Legacy",
+  "Bank"
+ ],
+ "entries": {
+  "GitHub": {
+   "user": "octo",
+   "pass": "gh-Pa55-word",
+   "url": "github.com",
+   "created": 1731000000.123456,
+   "favourite": true
+  },
+  "Café ☕": {
+   "user": "barista@example.com",
+   "pass": "ünïcødé \"quoted\" \\ back",
+   "url": "",
+   "created": 1731000100.5,
+   "favourite": false
+  },
+  "Legacy": {
+   "user": "old",
+   "pass": "legacy-pw"
+  },
+  "Bank": {
+   "user": "me",
+   "pass": "",
+   "url": "https://bank.example",
+   "created": 1731000200,
+   "favourite": false,
+   "future_field": [
+    1,
+    "two",
+    null
+   ]
+  }
+ }
+}

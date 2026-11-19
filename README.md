@@ -23,6 +23,8 @@ localhost connection.
   `vault_bk_2026_08_08_1432_01.pwmanager` so the folder sorts chronologically,
   kept in OneDrive when there is one, and restorable from inside the app.
 - **Editable account names** — renaming an account keeps its place in the vault.
+- **Send to iPhone** — hand the vault to the iOS app over your Wi-Fi, confirmed
+  with a code shown on the phone.
 - **Auto-lock and tray** — re-locks after inactivity and can keep running in the
   system tray.
 - **Localisation** — English, Italian, French, and Danish.
@@ -61,6 +63,12 @@ The companion extension ~in [`extension/firefox`](extension/firefox)~ (now appro
 saves credentials by talking to the running app on `127.0.0.1`. It never
 contacts a remote server. See [`extension/README.md`](extension/README.md) for
 setup, pairing, and usage.
+
+## iOS app
+
+A native iOS version lives in [`ios/`](ios/README.md). It opens the same vault
+file (for example from OneDrive), and GitHub Actions builds an unsigned `.ipa`
+for sideloading with AltStore or Sideloadly.
 
 ## Running from source
 

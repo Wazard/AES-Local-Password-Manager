@@ -161,6 +161,7 @@ class AppBar(ctk.CTkFrame):
                 ("settings.png", app.show_extension_screen, "extension.title"),
                 ("file-backup.png", app.show_backup_screen, "backup.title"),
                 ("passkey.png", app.show_change_master_screen, "changepw.title"),
+                ("phone.png", app.show_phone_screen, "phone.title"),
         ):
             icon_button(self._nav, icon, cmd,
                         tooltip=lambda k=key: app.t(k)).pack(side="right", padx=2)

@@ -1,0 +1,60 @@
+# XcodeGen spec — the .xcodeproj is generated from this (CI runs `xcodegen`),
+# so there is no hand-edited project file to keep in sync.
+name: SecureVault
+options:
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.2.0"     # CI overrides this from core/version.py
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  SecureVault:
+    type: application
+    platform: iOS
+    sources:
+      - path: SecureVault
+      - path: Vendor/argon2
+        excludes: ["LICENSE"]
+      - path: ../UI/palette.json
+        buildPhase: resources
+    dependencies:
+      - sdk: libz.tbd
+    settings:
+      base:
+        PRODUCT_NAME: SecureVault
+        PRODUCT_BUNDLE_IDENTIFIER: app.securevault.ios
+        INFOPLIST_FILE: SecureVault/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_OBJC_BRIDGING_HEADER: SecureVault/SecureVault-Bridging-Header.h
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Vendor/argon2/include"]
+        # Unoptimised Argon2 is several times slower; optimise C in Debug too.
+        GCC_OPTIMIZATION_LEVEL: s
+  SecureVaultTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: SecureVaultTests
+        excludes: ["Fixtures/**"]
+      - path: SecureVaultTests/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: SecureVault
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.securevault.ios.tests
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_OBJC_BRIDGING_HEADER: SecureVault/SecureVault-Bridging-Header.h
+        HEADER_SEARCH_PATHS: ["$(SRCROOT)/Vendor/argon2/include"]
+schemes:
+  SecureVault:
+    build:
+      targets:
+        SecureVault: all
+        SecureVaultTests: [test]
+    test:
+      targets: [SecureVaultTests]

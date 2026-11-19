@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- An iOS app (`ios/`) that opens the same vault file, built as an unsigned
+  `.ipa` by GitHub Actions for sideloading.
+- **Send to iPhone**: the phone icon in the top bar sends the vault to the iOS
+  app over the local Wi-Fi. The iPhone shows a 6-digit code that has to be
+  typed on the PC, and asks before it replaces anything.
+
 ## 1.2.0
 
 ### Changed

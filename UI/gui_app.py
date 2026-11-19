@@ -36,6 +36,7 @@ from UI.screen_generator import GeneratorMixin
 from UI.screen_extension import ExtensionMixin
 from UI.screen_backup import BackupMixin
 from UI.screen_changepw import ChangeMasterMixin
+from UI.screen_phone import PhoneMixin
 
 apply_theme()
 
@@ -61,7 +62,7 @@ CLIPBOARD_CLEAR_MS = 25 * 1000    # wipe copied secrets from the clipboard
 
 class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
                          GeneratorMixin, ExtensionMixin, BackupMixin,
-                         ChangeMasterMixin):
+                         ChangeMasterMixin, PhoneMixin):
     def __init__(self):
         super().__init__()
 
@@ -502,6 +503,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             "extension": self.show_extension_screen,
             "backup": self.show_backup_screen,
             "changepw": self.show_change_master_screen,
+            "phone": self.show_phone_screen,
         }
         view_map[self.current_view]()
 
