@@ -13,8 +13,43 @@ import customtkinter as ctk
 
 PALETTE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "palette.json")
 
-with open(PALETTE_FILE, encoding="utf-8") as _fh:
-    PALETTE = json.load(_fh)
+
+def _user_palette_file():
+    """An update replaces everything in the install folder, so a palette the
+    user wrote there would be lost. One placed in the data dir is not."""
+    try:
+        from core import paths
+        return os.path.join(paths.data_dir(), "palette.json")
+    except Exception:
+        return None
+
+
+def _load_palette():
+    """The bundled palette, with any user palette layered on top.
+
+    Merging section by section rather than replacing the file means a partial
+    override — say three colours — is enough, and a palette written for an
+    older version can't stop the app from starting by omitting a key.
+    """
+    with open(PALETTE_FILE, encoding="utf-8") as fh:
+        palette = json.load(fh)
+    override_path = _user_palette_file()
+    if not override_path or not os.path.isfile(override_path):
+        return palette
+    try:
+        with open(override_path, encoding="utf-8") as fh:
+            override = json.load(fh)
+        for section, values in override.items():
+            if isinstance(values, dict) and isinstance(palette.get(section), dict):
+                palette[section].update(values)
+            else:
+                palette[section] = values
+    except (OSError, ValueError, AttributeError):
+        pass  # a broken palette is not a reason to refuse to start
+    return palette
+
+
+PALETTE = _load_palette()
 
 C = PALETTE["colors"]
 _F = PALETTE["fonts"]

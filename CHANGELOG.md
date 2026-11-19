@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.2.0
+
+### Changed
+
+- The interface was rebuilt. Colours, fonts, sizes, radii and spacing now come
+  from `UI/palette.json`, so the whole look can be changed by editing one file;
+  a `palette.json` in `%APPDATA%\SecureVault` overrides the bundled one and
+  survives updates.
+- Headings are sentence case instead of ALL CAPS, and are properly cased per
+  language — title-casing translated strings produced "Generateur De Mots De
+  Passe" in French.
+- Confirmations, warnings and errors are in-app panels rather than Windows
+  message boxes.
+- Settings is split into labelled sections, with each explanation next to the
+  control it belongs to.
+
+### Added
+
+- Passwords are masked by default everywhere, with a reveal toggle.
+- Password strength is shown when creating a vault, changing the master
+  password, and saving an account; the generator reports entropy in bits.
+- A copy-password button on each account row, and a countdown on the copy
+  buttons showing when the clipboard is wiped.
+- A warning 30 seconds before the idle auto-lock, and the login screen now says
+  when it locked because of inactivity.
+- Inline validation on the account form, including duplicate names.
+- Website URL and date added are shown on the account detail screen.
+
+### Fixed
+
+- The frozen build no longer depends on files that were not bundled with it.
+
 ## 1.1.0
 
 ### Fixed

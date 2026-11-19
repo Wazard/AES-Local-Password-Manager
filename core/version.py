@@ -4,4 +4,4 @@
 exe's metadata and the installer, so the number shown in Windows' installed-apps
 list, the exe properties and the login screen can't drift apart.
 """
-VERSION = "1.1.0"
+VERSION = "1.2.0"
