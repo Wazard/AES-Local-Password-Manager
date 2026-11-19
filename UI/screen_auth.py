@@ -37,7 +37,7 @@ class AuthMixin:
         ui.app_bar(self)
         creating = self.creating_vault
 
-        body = ctk.CTkFrame(self.container, fg_color="transparent")
+        body = ctk.CTkFrame(self.screen, fg_color="transparent")
         body.pack(fill="both", expand=True)
         self._version_label()
 
@@ -106,7 +106,7 @@ class AuthMixin:
         self.clear_screen()
         ui.app_bar(self)
 
-        body = ctk.CTkFrame(self.container, fg_color="transparent")
+        body = ctk.CTkFrame(self.screen, fg_color="transparent")
         body.pack(fill="both", expand=True)
         self._version_label()
 
@@ -161,7 +161,7 @@ class AuthMixin:
         """Shown on both pre-login screens, so "did the update actually
         install?" has a visible answer. Lifted, because it is placed over the
         body frame rather than inside it."""
-        label = ctk.CTkLabel(self.container, text="v" + version.VERSION,
+        label = ctk.CTkLabel(self.screen, text="v" + version.VERSION,
                              text_color=T.TEXT_MUTED, font=T.font(T.S_SMALL))
         label.place(relx=0.98, rely=0.98, anchor="se")
         label.lift()

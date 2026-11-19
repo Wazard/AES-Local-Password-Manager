@@ -67,17 +67,28 @@ def icon_button(parent, icon_name, command=None, size=34, icon_px=18,
 # Tooltips (the toolbar is icon-only, so the icons need names)
 # --------------------------------------------------------------------------
 def attach_tooltip(widget, text):
+    """`text` may be a callable, for widgets that outlive a language change."""
     state = {"win": None, "after": None}
 
     def show():
         state["after"] = None
         if not widget.winfo_exists():
             return
+        # Only while the pointer is really on it: the dashboard is kept under
+        # the other screens, and a tip must not pop up over one of those.
+        try:
+            under = widget.winfo_containing(*widget.winfo_pointerxy())
+        except Exception:
+            under = None
+        if under is None or not (under is widget or
+                                 str(under).startswith(str(widget) + ".")):
+            return
         win = ctk.CTkToplevel(widget)
         win.overrideredirect(True)
         win.attributes("-topmost", True)
         win.configure(fg_color=T.BORDER_STRONG)
-        ctk.CTkLabel(win, text=text, font=T.font(T.S_SMALL), text_color=T.TEXT,
+        ctk.CTkLabel(win, text=text() if callable(text) else text,
+                     font=T.font(T.S_SMALL), text_color=T.TEXT,
                      fg_color=T.CARD, corner_radius=6,
                      padx=8, pady=4).pack(padx=1, pady=1)
         win.update_idletasks()
@@ -111,65 +122,95 @@ def attach_tooltip(widget, text):
 # --------------------------------------------------------------------------
 # Page scaffolding
 # --------------------------------------------------------------------------
+class AppBar(ctk.CTkFrame):
+    """The top bar. Built once and kept for the life of the window: each
+    screen only says which parts it wants, so moving between screens doesn't
+    pay for a fresh dropdown and icon buttons every time."""
+
+    def __init__(self, app):
+        super().__init__(app.container, height=T.H_BAR, fg_color=T.BG_BAR,
+                         corner_radius=0)
+        self.pack_propagate(False)
+        self._app = app
+        self._back_cmd = None
+        self._slot_builder = None
+
+        left = ctk.CTkFrame(self, fg_color="transparent")
+        left.pack(side="left", padx=(10, 0))
+        self._back = ctk.CTkButton(
+            left, text="←", width=34, height=34, corner_radius=T.R_BTN,
+            font=T.font(17), fg_color="transparent",
+            text_color=T.TEXT_SECONDARY, hover_color=T.CARD_HOVER,
+            command=lambda: self._back_cmd is not None and self._back_cmd())
+        # Screen-specific controls (the dashboard's view toggles).
+        self._slot = ctk.CTkFrame(left, fg_color="transparent")
+
+        right = ctk.CTkFrame(self, fg_color="transparent")
+        right.pack(side="right", padx=(0, 10))
+        self._lang = ctk.CTkOptionMenu(
+            right, values=app.lang_manager.get_supported_languages(),
+            command=app.change_language, width=68, height=30,
+            font=T.font(T.S_LABEL), dropdown_font=T.font(T.S_LABEL),
+            fg_color=T.SECONDARY, button_color=T.SECONDARY,
+            button_hover_color=T.SECONDARY_HOVER)
+        self._lang.pack(side="right", padx=(6, 0))
+
+        # The vault-level destinations, which only exist while unlocked.
+        self._nav = ctk.CTkFrame(right, fg_color="transparent")
+        for icon, cmd, key in (
+                ("settings.png", app.show_extension_screen, "extension.title"),
+                ("file-backup.png", app.show_backup_screen, "backup.title"),
+                ("passkey.png", app.show_change_master_screen, "changepw.title"),
+        ):
+            icon_button(self._nav, icon, cmd,
+                        tooltip=lambda k=key: app.t(k)).pack(side="right", padx=2)
+
+    def show(self, back=None, left_builder=None, show_nav=False):
+        self._back_cmd = back
+        self._back.pack_forget()
+        self._slot.pack_forget()
+        if back is not None:
+            self._back.pack(side="left")
+        if left_builder is not None:
+            if left_builder != self._slot_builder:
+                for widget in self._slot.winfo_children():
+                    widget.destroy()
+                left_builder(self._slot)
+                self._slot_builder = left_builder
+            self._slot.pack(side="left")
+        if show_nav:
+            self._nav.pack(side="right")
+        else:
+            self._nav.pack_forget()
+        self._lang.set(self._app.current_lang)
+
+
 def app_bar(app, back=None, left_builder=None, show_nav=False):
-    """The persistent top bar.
+    """Set up the persistent top bar for the screen being shown.
 
     `back` is a callback for the ← button; `left_builder(frame)` can add
     controls on the left instead (the dashboard's view toggles). `show_nav`
     adds the vault-level destinations, which only exist while unlocked.
     """
-    bar = ctk.CTkFrame(app.container, height=T.H_BAR, fg_color=T.BG_BAR,
-                       corner_radius=0)
-    bar.pack(fill="x", side="top")
-    bar.pack_propagate(False)
-
-    left = ctk.CTkFrame(bar, fg_color="transparent")
-    left.pack(side="left", padx=(10, 0))
-    if back is not None:
-        ctk.CTkButton(left, text="←", width=34, height=34, corner_radius=T.R_BTN,
-                      font=T.font(17), fg_color="transparent",
-                      text_color=T.TEXT_SECONDARY, hover_color=T.CARD_HOVER,
-                      command=back).pack(side="left")
-    if left_builder is not None:
-        left_builder(left)
-
-    right = ctk.CTkFrame(bar, fg_color="transparent")
-    right.pack(side="right", padx=(0, 10))
-
-    lang = ctk.CTkOptionMenu(
-        right, values=app.lang_manager.get_supported_languages(),
-        command=app.change_language, width=68, height=30,
-        font=T.font(T.S_LABEL), dropdown_font=T.font(T.S_LABEL),
-        fg_color=T.SECONDARY, button_color=T.SECONDARY,
-        button_hover_color=T.SECONDARY_HOVER)
-    lang.set(app.current_lang)
-    lang.pack(side="right", padx=(6, 0))
-
-    if show_nav:
-        for icon, cmd, tip in (
-                ("settings.png", app.show_extension_screen, app.t("extension.title")),
-                ("file-backup.png", app.show_backup_screen, app.t("backup.title")),
-                ("passkey.png", app.show_change_master_screen, app.t("changepw.title")),
-        ):
-            icon_button(right, icon, cmd, tooltip=tip).pack(side="right", padx=2)
-    return bar
+    app.app_bar.show(back=back, left_builder=left_builder, show_nav=show_nav)
+    return app.app_bar
 
 
 def page(app, scroll=False, padx=None):
     """The content area under the app bar."""
     pad = T.PAD_SCREEN if padx is None else padx
     if scroll:
-        frame = ctk.CTkScrollableFrame(app.container, fg_color="transparent")
+        frame = ctk.CTkScrollableFrame(app.screen, fg_color="transparent")
         frame.pack(fill="both", expand=True, padx=pad - 8, pady=(T.GAP_L, 0))
         return frame
-    frame = ctk.CTkFrame(app.container, fg_color="transparent")
+    frame = ctk.CTkFrame(app.screen, fg_color="transparent")
     frame.pack(fill="both", expand=True, padx=pad, pady=(T.GAP_L, 0))
     return frame
 
 
 def footer(app):
     """The sticky action bar at the bottom of the window."""
-    bar = ctk.CTkFrame(app.container, fg_color=T.BG_BAR, corner_radius=0)
+    bar = ctk.CTkFrame(app.screen, fg_color=T.BG_BAR, corner_radius=0)
     bar.pack(fill="x", side="bottom")
     inner = ctk.CTkFrame(bar, fg_color="transparent")
     inner.pack(fill="x", padx=T.PAD_SCREEN, pady=T.GAP)

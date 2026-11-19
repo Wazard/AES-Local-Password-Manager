@@ -127,6 +127,16 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
 
         self.container = ctk.CTkFrame(self, fg_color="transparent")
         self.container.pack(fill="both", expand=True)
+        # Kept for the whole session: the top bar, and the dashboard once built.
+        self.app_bar = ui.AppBar(self)
+        self.app_bar.pack(fill="x", side="top")
+        # Screens are stacked in here. The dashboard stays put underneath the
+        # others: covering a window is cheap, while un-hiding one makes Windows
+        # re-show every widget on it (about 10 ms per account card).
+        self.host = ctk.CTkFrame(self.container, fg_color="transparent")
+        self.host.pack(fill="both", expand=True)
+        self.screen = None
+        self._dash_screen = None
 
         self.show_auth_screen()
         self.after(600, self._maybe_show_tamper_notice)
@@ -449,6 +459,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.logged_in = False
         self._idle_warning = None
         self.creating_vault = False
+        self._drop_dashboard()  # it shows account names: never keep it past a lock
         self.show_auth_screen()
 
     # --- Shared helpers ---
@@ -464,6 +475,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             app_config.save(self.ext_config)
         except Exception:
             pass
+        self._drop_dashboard()  # its labels are in the old language
         view_map = {
             "auth": self.show_auth_screen,
             "dashboard": self.show_dashboard,
@@ -478,8 +490,26 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         view_map[self.current_view]()
 
     def clear_screen(self):
+        """Swap in an empty screen and return it. Screens build into it."""
+        self._hide_screens()
+        if self._dash_screen is not None:
+            self._on_dashboard_covered()
+        self.screen = ctk.CTkFrame(self.host, fg_color="transparent")
+        self.screen.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.screen.lift()
+        return self.screen
+
+    def _hide_screens(self):
+        """Take down whatever is showing. The app bar stays, and so does the
+        dashboard — rebuilding those on every click is what made moving around
+        the app slow. Everything else (the previous screen, a modal, the idle
+        banner) is destroyed, as it always was."""
         for widget in self.container.winfo_children():
-            widget.destroy()
+            if widget is not self.app_bar and widget is not self.host:
+                widget.destroy()
+        for widget in self.host.winfo_children():
+            if widget is not self._dash_screen:
+                widget.destroy()
 
     def copy_to_clipboard(self, text):
         self.clipboard_clear()
