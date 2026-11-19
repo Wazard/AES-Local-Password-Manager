@@ -2,7 +2,7 @@
 are not installed (the login toggle simply disables itself)."""
 import threading
 
-from UI.theme import COLOR_CHARCOAL
+from UI.theme import BG
 
 try:
     import pystray
@@ -35,7 +35,7 @@ class TrayManager:
         try:
             image = Image.open(self.icon_path)
         except Exception:
-            image = Image.new("RGB", (64, 64), COLOR_CHARCOAL)
+            image = Image.new("RGB", (64, 64), BG)
         menu = pystray.Menu(
             pystray.MenuItem(self.labels("tray.open"), self._on_open, default=True),
             pystray.MenuItem(self.labels("tray.quit"), self._on_quit),

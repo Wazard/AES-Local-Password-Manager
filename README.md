@@ -25,6 +25,17 @@ localhost connection.
   system tray.
 - **Localisation** — English, Italian, French, and Danish.
 
+## Theming
+
+Every colour, font, radius and spacing value lives in
+[`UI/palette.json`](UI/palette.json). Nothing visual is hard-coded in the
+screens, so a different look is a matter of editing that file and restarting
+the app — no code changes. The bundled palette is "Midnight Indigo": cool
+near-black neutrals, an indigo primary, and amber kept for favourites only.
+
+`fonts.ui` and `fonts.mono` fall back to `ui_fallback` / `mono_fallback` when
+the preferred family isn't installed, so a palette can name any font safely.
+
 ## Security
 
 - **Key derivation:** Argon2id (64 MiB, 3 passes, 4 lanes). Vaults created with

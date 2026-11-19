@@ -1,11 +1,10 @@
-"""Accounts dashboard: search, sort, and a grid/list view toggle."""
+"""Accounts dashboard: search, sort, favourites and a grid/list toggle."""
 import customtkinter as ctk
 
 from core import data_handler
+from UI import components as ui
 from UI import icons
-from UI.theme import (FONT_FAMILY, COLOR_BG_CARD, COLOR_CARD_HOVER, COLOR_STEEL,
-                      COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_MUTED, COLOR_GOLD,
-                      COLOR_DANGER, COLOR_DANGER_HOVER)
+from UI import theme as T
 
 
 class DashboardMixin:
@@ -15,51 +14,22 @@ class DashboardMixin:
         self.start_security_timers()
         self.clear_screen()
 
-        # --- Top toolbar: view toggle (left) + logout (right) ---
-        topbar = ctk.CTkFrame(self.container, fg_color="transparent")
-        topbar.pack(fill="x", padx=14, pady=(12, 0))
+        ui.app_bar(self, left_builder=self._view_toggles, show_nav=True)
 
-        # View toggle: two icon buttons; the active mode is highlighted.
-        self._view_grid_btn = ctk.CTkButton(
-            topbar, text="", image=icons.load("show-large.png", 20), width=40, height=32,
-            fg_color=COLOR_STEEL if self.view_mode == "grid" else COLOR_BG_CARD,
-            hover_color=COLOR_CARD_HOVER, command=lambda: self._on_view_change("grid"))
-        self._view_grid_btn.pack(side="left", padx=(0, 6))
-        self._view_list_btn = ctk.CTkButton(
-            topbar, text="", image=icons.load("show-inline.png", 20), width=40, height=32,
-            fg_color=COLOR_STEEL if self.view_mode == "list" else COLOR_BG_CARD,
-            hover_color=COLOR_CARD_HOVER, command=lambda: self._on_view_change("list"))
-        self._view_list_btn.pack(side="left")
+        header = ctk.CTkFrame(self.container, fg_color="transparent")
+        header.pack(fill="x", padx=T.PAD_SCREEN, pady=(T.GAP_L, 0))
+        ui.title(header, self.t("dashboard.title")).pack()
+        self.count_label = ctk.CTkLabel(header, text="", font=T.font(T.S_SMALL),
+                                        text_color=T.TEXT_MUTED)
+        self.count_label.pack(pady=(2, 0))
 
-        lang_menu = ctk.CTkOptionMenu(
-            topbar, values=self.lang_manager.get_supported_languages(),
-            command=self.change_language, width=72, height=32)
-        lang_menu.set(self.current_lang)
-        lang_menu.pack(side="right")
-        ctk.CTkButton(topbar, text="", image=icons.load("settings.png", 20), width=36, height=32,
-                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
-                      command=self.show_extension_screen).pack(side="right", padx=(0, 8))
-        ctk.CTkButton(topbar, text="", image=icons.load("file-backup.png", 20), width=36, height=32,
-                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
-                      command=self.show_backup_screen).pack(side="right", padx=(0, 8))
-        ctk.CTkButton(topbar, text="", image=icons.load("passkey.png", 20), width=36, height=32,
-                      fg_color=COLOR_BG_CARD, hover_color=COLOR_CARD_HOVER,
-                      command=self.show_change_master_screen).pack(side="right", padx=(0, 8))
-
-        header = ctk.CTkFrame(self.container, height=60, fg_color="transparent")
-        header.pack(fill="x", pady=(2, 6))
-        ctk.CTkLabel(header, text=self.t("dashboard.title"),
-                     font=(FONT_FAMILY, 24, "bold")).pack(expand=True)
-
-        # --- Search + Sort controls ---
         controls = ctk.CTkFrame(self.container, fg_color="transparent")
-        controls.pack(fill="x", padx=20, pady=(0, 6))
+        controls.pack(fill="x", padx=T.PAD_SCREEN, pady=(T.GAP, 0))
 
-        self.search_entry = ctk.CTkEntry(
-            controls, placeholder_text=self.t("dashboard.search"), height=36)
+        self.search_entry = ui.text_field(
+            controls, placeholder=self.t("dashboard.search"),
+            value=self.search_query)
         self.search_entry.pack(side="left", fill="x", expand=True)
-        if self.search_query:
-            self.search_entry.insert(0, self.search_query)
         self.search_entry.bind("<KeyRelease>", self._on_search)
 
         # Map localized labels <-> internal sort modes so the menu localizes.
@@ -72,25 +42,37 @@ class DashboardMixin:
         mode_to_label = {v: k for k, v in self.sort_label_to_mode.items()}
         sort_menu = ctk.CTkOptionMenu(
             controls, values=list(self.sort_label_to_mode.keys()),
-            command=self._on_sort_change, width=150, height=36)
+            command=self._on_sort_change, width=148, height=T.H_INPUT,
+            font=T.font(T.S_LABEL), dropdown_font=T.font(T.S_LABEL),
+            fg_color=T.SECONDARY, button_color=T.SECONDARY,
+            button_hover_color=T.SECONDARY_HOVER)
         sort_menu.set(mode_to_label[self.sort_mode])
-        sort_menu.pack(side="left", padx=(8, 0))
+        sort_menu.pack(side="left", padx=(T.GAP_S, 0))
 
-        # --- Account list ---
         self.dash_scroll = ctk.CTkScrollableFrame(self.container, fg_color="transparent")
-        self.dash_scroll.pack(fill="both", expand=True, padx=20, pady=10)
+        self.dash_scroll.pack(fill="both", expand=True,
+                              padx=T.PAD_SCREEN - 8, pady=(T.GAP, 0))
+
+        bar = ui.footer(self)
+        ui.primary_button(bar, self.t("dashboard.add_btn"),
+                          self.show_add_screen, width=132).pack(side="left")
+        ui.secondary_button(bar, self.t("dashboard.gen_pass"),
+                            self.show_gen_pass_screen, width=164).pack(
+                                side="left", padx=(T.GAP_S, 0))
+        ui.danger_button(bar, self.t("dashboard.logout"), self.logout,
+                         width=92).pack(side="right")
+
         self._render_accounts()
 
-        footer = ctk.CTkFrame(self.container, fg_color="transparent")
-        footer.pack(fill="x", side="bottom", pady=20, padx=20)
-        ctk.CTkButton(footer, text=self.t("dashboard.logout"), width=90,
-                      fg_color=COLOR_DANGER, hover_color=COLOR_DANGER_HOVER,
-                      command=self.logout).pack(side="right", padx=(5, 0))
-        ctk.CTkButton(footer, text=self.t("dashboard.add_btn"), fg_color=COLOR_SUCCESS,
-                      hover_color=COLOR_SUCCESS_HOVER, command=self.show_add_screen).pack(
-                          side="left", expand=True, padx=5)
-        ctk.CTkButton(footer, text=self.t("dashboard.gen_pass"),
-                      command=self.show_gen_pass_screen).pack(side="left", expand=True, padx=5)
+    def _view_toggles(self, parent):
+        self._view_list_btn = ui.icon_button(
+            parent, "show-inline.png", lambda: self._on_view_change("list"),
+            active=self.view_mode == "list")
+        self._view_list_btn.pack(side="left", padx=(T.GAP_S, 2))
+        self._view_grid_btn = ui.icon_button(
+            parent, "show-large.png", lambda: self._on_view_change("grid"),
+            active=self.view_mode == "grid")
+        self._view_grid_btn.pack(side="left")
 
     def _on_search(self, _event=None):
         self.search_query = self.search_entry.get()
@@ -101,11 +83,16 @@ class DashboardMixin:
         self._render_accounts()
 
     def _on_view_change(self, mode):
-        self.view_mode = mode if mode in ("grid", "list") else "grid"
-        self._view_grid_btn.configure(
-            fg_color=COLOR_STEEL if self.view_mode == "grid" else COLOR_BG_CARD)
-        self._view_list_btn.configure(
-            fg_color=COLOR_STEEL if self.view_mode == "list" else COLOR_BG_CARD)
+        self.view_mode = mode if mode in ("grid", "list") else "list"
+        for btn, name, mode_name in (
+                (self._view_grid_btn, "show-large.png", "grid"),
+                (self._view_list_btn, "show-inline.png", "list")):
+            active = self.view_mode == mode_name
+            btn.configure(
+                fg_color=T.PRIMARY if active else "transparent",
+                hover_color=T.PRIMARY_HOVER if active else T.CARD_HOVER,
+                image=icons.load_tinted(
+                    name, 18, T.ON_PRIMARY if active else T.TEXT_SECONDARY))
         self._render_accounts()
 
     def toggle_favourite(self, service):
@@ -116,39 +103,57 @@ class DashboardMixin:
         self.save_vault()
         self._render_accounts()
 
-    def _star_button(self, parent, service, size):
-        """A star toggle: star-fill.png (used as-is) when favourited, faded
-        outline otherwise. Falls back to a gold-tinted star.png if no fill icon."""
+    def _star_button(self, parent, service, size=34):
         fav = self.vault_data[service].get("favourite", False)
-        px = 20 if size >= 40 else 16
         if fav:
-            img = (icons.load("star-fill.png", px) if icons.exists("star-fill.png")
-                   else icons.load_tinted("star.png", px, COLOR_GOLD))
+            img = (icons.load("star-fill.png", 17) if icons.exists("star-fill.png")
+                   else icons.load_tinted("star.png", 17, T.ACCENT))
         else:
-            img = icons.load_dimmed("star.png", px)
-        return ctk.CTkButton(
-            parent, text="", image=img, width=size, height=size, corner_radius=10,
-            fg_color="transparent", hover_color=COLOR_CARD_HOVER,
+            img = icons.load_tinted("star.png", 17, T.TEXT_MUTED)
+        btn = ctk.CTkButton(
+            parent, text="", image=img, width=size, height=size,
+            corner_radius=T.R_BTN, fg_color="transparent",
+            hover_color=T.CARD_HOVER,
             command=lambda s=service: self.toggle_favourite(s))
+        ui.attach_tooltip(btn, self.t("dashboard.favourite"))
+        return btn
+
+    def _copy_pw_button(self, parent, service):
+        btn = ctk.CTkButton(
+            parent, text="", image=icons.load_tinted("copy.png", 16, T.TEXT_MUTED),
+            width=32, height=32, corner_radius=T.R_BTN, fg_color="transparent",
+            hover_color=T.CARD_HOVER)
+
+        def do_copy():
+            self.copy_to_clipboard(self.get_password(service))
+            btn.configure(image=icons.load_tinted("copy.png", 16, T.POSITIVE))
+            btn.after(1200, lambda: btn.winfo_exists() and btn.configure(
+                image=icons.load_tinted("copy.png", 16, T.TEXT_MUTED)))
+
+        btn.configure(command=do_copy)
+        ui.attach_tooltip(btn, self.t("dashboard.copy_password"))
+        return btn
 
     def _render_accounts(self):
         """(Re)draws the filtered + sorted accounts in the current view mode."""
         for widget in self.dash_scroll.winfo_children():
             widget.destroy()
 
+        total = len(self.vault_data)
+        if self.count_label.winfo_exists():
+            self.count_label.configure(
+                text="" if not total else
+                (self.t("dashboard.count_one") if total == 1
+                 else self.t("dashboard.count", n=total)))
+
         if not self.vault_data:
-            ctk.CTkLabel(self.dash_scroll, text=self.t("dashboard.no_accounts"),
-                         font=(FONT_FAMILY, 16), text_color=COLOR_MUTED).pack(pady=60)
-            ctk.CTkButton(self.dash_scroll, text=self.t("dashboard.add_btn").upper(),
-                          fg_color=COLOR_SUCCESS, hover_color=COLOR_SUCCESS_HOVER,
-                          command=self.show_add_screen).pack()
+            self._empty_state(self.t("dashboard.no_accounts"))
             return
 
         services = data_handler.visible_services(
             self.vault_data, self.search_query, self.sort_mode)
         if not services:
-            ctk.CTkLabel(self.dash_scroll, text=self.t("dashboard.no_results"),
-                         font=(FONT_FAMILY, 16), text_color=COLOR_MUTED).pack(pady=60)
+            self._empty_state(self.t("dashboard.no_results"))
             return
 
         if self.view_mode == "list":
@@ -156,61 +161,83 @@ class DashboardMixin:
         else:
             self._render_grid(services)
 
-    def _render_grid(self, services):
-        self.dash_scroll.grid_columnconfigure((0, 1), weight=1)
-        for i, service in enumerate(services):
-            card = ctk.CTkFrame(self.dash_scroll, fg_color=COLOR_BG_CARD,
-                                corner_radius=12, height=92)
-            card.grid(row=i // 2, column=i % 2, padx=8, pady=8, sticky="ew")
-            card.grid_propagate(False)
+    def _empty_state(self, message):
+        box = ctk.CTkFrame(self.dash_scroll, fg_color="transparent")
+        box.pack(expand=True, pady=80)
+        ctk.CTkLabel(box, text=message, font=T.font(T.S_BODY),
+                     text_color=T.TEXT_MUTED).pack()
 
-            # Left-aligned name + username, vertically centered.
-            text = ctk.CTkFrame(card, fg_color="transparent")
-            text.place(relx=0.0, rely=0.5, x=16, anchor="w")
-            name_lbl = ctk.CTkLabel(text, text=service, font=(FONT_FAMILY, 15, "bold"),
-                                    anchor="w", justify="left")
-            name_lbl.pack(anchor="w")
-            clickable = [card, text, name_lbl]
-
-            username = str(self.vault_data[service].get("user", ""))
-            if username:
-                user_lbl = ctk.CTkLabel(text, text=username, font=(FONT_FAMILY, 12),
-                                        text_color=COLOR_MUTED, anchor="w", justify="left")
-                user_lbl.pack(anchor="w")
-                clickable.append(user_lbl)
-
-            self._make_card_clickable(card, clickable, service)
-            # Star in the top-right corner.
-            self._star_button(card, service, size=28).place(relx=1.0, y=6, x=-6, anchor="ne")
-
-    def _make_card_clickable(self, card, widgets, service):
-        """Open details on click and highlight the card on hover, across all
-        of its child widgets (so the whole block behaves as one button)."""
+    def _hoverable(self, card, widgets, service):
+        """Makes a whole card behave as one button."""
         def on_click(_e=None, s=service):
             self.show_details(s)
 
         def on_enter(_e=None):
-            card.configure(fg_color=COLOR_CARD_HOVER)
+            if card.winfo_exists():
+                card.configure(fg_color=T.CARD_HOVER)
 
         def on_leave(_e=None):
-            card.configure(fg_color=COLOR_BG_CARD)
+            if card.winfo_exists():
+                card.configure(fg_color=T.CARD)
 
         for w in widgets:
             w.bind("<Button-1>", on_click)
             w.bind("<Enter>", on_enter)
             w.bind("<Leave>", on_leave)
 
+    def _entry_subtitle(self, service):
+        entry = self.vault_data[service]
+        return str(entry.get("user") or entry.get("url") or "")
+
     def _render_list(self, services):
         for service in services:
-            card = ctk.CTkFrame(self.dash_scroll, fg_color=COLOR_BG_CARD,
-                                corner_radius=10, height=44)
-            card.pack(fill="x", pady=4)
+            card = ui.card(self.dash_scroll, height=56)
+            card.pack(fill="x", pady=4, padx=2)
             card.pack_propagate(False)
-            # Star and name sit inside the same block.
-            self._star_button(card, service, size=44).pack(side="left")
-            ctk.CTkButton(
-                card, text=service, anchor="w", height=44, corner_radius=10,
-                font=(FONT_FAMILY, 14),
-                fg_color="transparent", hover_color=COLOR_CARD_HOVER,
-                command=lambda s=service: self.show_details(s)
-            ).pack(side="left", fill="both", expand=True)
+
+            self._star_button(card, service).pack(side="left", padx=(8, 0))
+            self._copy_pw_button(card, service).pack(side="right", padx=(0, 10))
+
+            text = ctk.CTkFrame(card, fg_color="transparent")
+            text.pack(side="left", fill="both", expand=True, padx=(8, 0))
+            spacer_top = ctk.CTkFrame(text, fg_color="transparent", width=1, height=0)
+            spacer_top.pack(expand=True)
+            name = ctk.CTkLabel(text, text=service, font=T.font(T.S_BODY, "bold"),
+                                text_color=T.TEXT, anchor="w")
+            name.pack(anchor="w")
+            widgets = [card, text, name, spacer_top]
+            subtitle = self._entry_subtitle(service)
+            if subtitle:
+                sub = ctk.CTkLabel(text, text=subtitle, font=T.font(T.S_SMALL),
+                                   text_color=T.TEXT_MUTED, anchor="w")
+                sub.pack(anchor="w")
+                widgets.append(sub)
+            spacer_bottom = ctk.CTkFrame(text, fg_color="transparent", width=1, height=0)
+            spacer_bottom.pack(expand=True)
+            widgets.append(spacer_bottom)
+            self._hoverable(card, widgets, service)
+
+    def _render_grid(self, services):
+        self.dash_scroll.grid_columnconfigure((0, 1), weight=1, uniform="col")
+        for i, service in enumerate(services):
+            card = ui.card(self.dash_scroll, height=T.H_CARD + 14)
+            card.grid(row=i // 2, column=i % 2, padx=4, pady=4, sticky="ew")
+            card.grid_propagate(False)
+
+            text = ctk.CTkFrame(card, fg_color="transparent")
+            text.place(relx=0.0, rely=0.5, x=14, anchor="w")
+            name = ctk.CTkLabel(text, text=service, font=T.font(T.S_BODY, "bold"),
+                                text_color=T.TEXT, anchor="w", justify="left")
+            name.pack(anchor="w")
+            widgets = [card, text, name]
+            subtitle = self._entry_subtitle(service)
+            if subtitle:
+                sub = ctk.CTkLabel(text, text=subtitle, font=T.font(T.S_SMALL),
+                                   text_color=T.TEXT_MUTED, anchor="w", justify="left")
+                sub.pack(anchor="w")
+                widgets.append(sub)
+
+            self._hoverable(card, widgets, service)
+            self._star_button(card, service, size=28).place(relx=1.0, y=6, x=-6, anchor="ne")
+            self._copy_pw_button(card, service).place(
+                relx=1.0, rely=1.0, x=-8, y=-6, anchor="se")

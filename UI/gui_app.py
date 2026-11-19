@@ -8,7 +8,6 @@ import time
 import json
 import threading
 import customtkinter as ctk
-from tkinter import messagebox
 
 from core import encryption
 from core import storage_handler
@@ -26,6 +25,8 @@ from core.single_instance import ControlServer
 from core.session_crypto import SessionCrypto
 from localization.language_manager import LanguageManager
 
+from UI import components as ui
+from UI import theme as T
 from UI.theme import apply_theme
 from UI.tray import TrayManager, TRAY_AVAILABLE
 from UI.screen_auth import AuthMixin
@@ -39,6 +40,7 @@ from UI.screen_changepw import ChangeMasterMixin
 apply_theme()
 
 AUTO_LOCK_MS = 5 * 60 * 1000      # re-lock after 5 minutes of inactivity
+IDLE_WARNING_MS = 30 * 1000       # heads-up shown before the auto-lock fires
 CLIPBOARD_CLEAR_MS = 25 * 1000    # wipe copied secrets from the clipboard
 
 
@@ -65,8 +67,14 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self._gen_after = None
 
         self.title("Secure Vault")
-        self.geometry("520x600")
-        self.minsize(460, 520)
+        self.geometry("%dx%d" % (T.WINDOW_W, T.WINDOW_H))
+        self.minsize(T.WINDOW_MIN_W, T.WINDOW_MIN_H)
+        self.configure(fg_color=T.BG)
+
+        # Exposed so the copy buttons can show the clipboard countdown.
+        self.clipboard_clear_ms = CLIPBOARD_CLEAR_MS
+        # Why the vault locked, so the login screen can explain itself.
+        self.lock_reason = None
 
         # System tray
         self._icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.ico")
@@ -104,6 +112,8 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
 
         # Auto-lock on inactivity + tamper tripwire
         self._idle_after = None
+        self._idle_warn_after = None
+        self._idle_warning = None
         self._tamper_after = None
         self.bind_all("<Key>", self._on_activity, add="+")
         self.bind_all("<ButtonPress>", self._on_activity, add="+")
@@ -123,8 +133,8 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             app_config.save(self.ext_config)
         except Exception:
             pass
-        messagebox.showinfo(self.t("security.tamper_notice_title"),
-                            self.t("security.tamper_notice_msg"))
+        ui.alert(self, self.t("security.tamper_notice_title"),
+                 self.t("security.tamper_notice_msg"))
 
     # --- Auto-lock ---
     def _on_activity(self, _event=None):
@@ -132,21 +142,39 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             self._reset_idle_timer()
 
     def _reset_idle_timer(self):
-        if self._idle_after is not None:
+        for attr in ("_idle_after", "_idle_warn_after"):
+            handle = getattr(self, attr, None)
+            if handle is not None:
+                try:
+                    self.after_cancel(handle)
+                except Exception:
+                    pass
+                setattr(self, attr, None)
+        if self._idle_warning is not None:
             try:
-                self.after_cancel(self._idle_after)
+                self._idle_warning.destroy()
             except Exception:
                 pass
-            self._idle_after = None
+            self._idle_warning = None
         # "Remember me" (keep running in tray) opts out of the idle auto-lock;
         # the tamper tripwire below is the safety net for a long-lived session.
         if self.minimize_to_tray.get():
             return
+        self._idle_warn_after = self.after(
+            max(AUTO_LOCK_MS - IDLE_WARNING_MS, 0), self._warn_idle)
         self._idle_after = self.after(AUTO_LOCK_MS, self._auto_lock)
+
+    def _warn_idle(self):
+        """Countdown banner before the vault locks itself."""
+        self._idle_warn_after = None
+        if not self.logged_in or self._idle_warning is not None:
+            return
+        self._idle_warning = ui.idle_banner(
+            self, int(IDLE_WARNING_MS / 1000), self._on_activity)
 
     def _auto_lock(self):
         if self.logged_in:
-            self.logout()
+            self.logout(reason="idle")
 
     # --- Tamper tripwire: lock instantly if a debugger attaches (opt-in) ---
     def start_security_timers(self):
@@ -178,9 +206,9 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             return
         if tamper.debugger_attached():
             self._tamper_after = None
-            self.logout()
-            messagebox.showwarning(self.t("security.tamper_title"),
-                                   self.t("security.tamper_msg"))
+            self.logout(reason="tamper")
+            ui.alert(self, self.t("security.tamper_title"),
+                     self.t("security.tamper_msg"), kind="warning")
             return
         self._tamper_after = self.after(1500, self._tamper_check)
 
@@ -361,11 +389,14 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         vault = os.path.abspath(storage_handler.VAULT_FILE)
         if src == vault:
             return
-        # Yes = link (keep in place for cloud backup), No = move here, Cancel = abort
-        choice = messagebox.askyesnocancel(self.t("import.title"), self.t("import.prompt"))
-        if choice is None:
-            return
-        if not choice:
+        ui.modal(self, self.t("import.title"), self.t("import.prompt_modal"), [
+            (self.t("modal.link"), "primary", lambda: self._import_choice(vault, src, True)),
+            (self.t("modal.move"), "secondary", lambda: self._import_choice(vault, src, False)),
+            (self.t("modal.cancel"), "secondary", None),
+        ])
+
+    def _import_choice(self, vault, src, link):
+        if not link:
             ok, msg, _ = backup.import_vault(vault, src, "move")
             self._after_import(ok, msg)
             return
@@ -390,11 +421,12 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         if ok:
             self.show_auth_screen()  # vault now present → normal login
         else:
-            messagebox.showinfo(self.t("import.title"), msg)
+            ui.alert(self, self.t("import.title"), msg)
 
-    def logout(self):
+    def logout(self, reason=None):
         """Clear the decrypted session (key + vault) and return to login."""
-        for attr in ("_idle_after", "_tamper_after"):
+        self.lock_reason = reason
+        for attr in ("_idle_after", "_idle_warn_after", "_tamper_after"):
             handle = getattr(self, attr, None)
             if handle is not None:
                 try:
@@ -411,6 +443,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.sort_mode = "name_asc"
         self.view_mode = "list"
         self.logged_in = False
+        self._idle_warning = None
         self.show_auth_screen()
 
     # --- Shared helpers ---
@@ -501,5 +534,6 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
     def save_vault(self):
         ok = self._persist_vault()
         if not ok:
-            messagebox.showerror("Error", "Save failed.")
+            ui.alert(self, self.t("modal.save_failed_title"),
+                     self.t("modal.save_failed_msg"), kind="negative")
         return ok

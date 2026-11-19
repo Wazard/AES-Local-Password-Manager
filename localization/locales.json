@@ -1,442 +1,634 @@
 {
-  "en": {
-    "auth": {
-      "title": "Password Manager",
-      "placeholder": "insert master password",
-      "login_btn": "Login",
-      "generate_btn": "Generate a Password",
-      "tray": "Keep running in tray on close",
-      "correct": "CORRECT",
-      "wrong": "WRONG PASSWORD",
-      "weak": "Weak master password — use 12+ characters with mixed types",
-      "import_btn": "I already have a vault"
-    },
-    "tray": {
-      "open": "Open Secure Vault",
-      "quit": "Quit"
-    },
-    "changepw": {
-      "title": "CHANGE MASTER PASSWORD",
-      "current": "Current password",
-      "new": "New password",
-      "confirm": "Confirm new password",
-      "save": "Change password",
-      "mismatch": "New passwords don't match",
-      "wrong": "Current password is incorrect",
-      "success": "Master password changed"
-    },
-    "security": {
-      "tamper_title": "Security",
-      "tamper_msg": "A debugger was detected attaching to Secure Vault. The vault has been locked.",
-      "tamper_notice_title": "Anti-tampering available",
-      "tamper_notice_msg": "Secure Vault can lock itself instantly if a debugger attaches to it. This protection is OFF by default — you can turn it on anytime in the settings (gear) tab."
-    },
-    "dashboard": {
-      "title": "ACCOUNTS",
-      "logout": "Log out",
-      "no_accounts": "no accounts found",
-      "no_results": "no matching accounts",
-      "search": "Search accounts...",
-      "sort_name_asc": "Name (A–Z)",
-      "sort_name_desc": "Name (Z–A)",
-      "sort_time_new": "Newest first",
-      "sort_time_old": "Oldest first",
-      "add_btn": "Add Account",
-      "list_all": "List All",
-      "gen_pass": "Password Generator"
-    },
-    "forms": {
-      "new_title": "NEW ACCOUNT",
-      "modify_title": "MODIFY {service}",
-      "account": "Account",
-      "username": "Username",
-      "password": "Password",
-      "url": "Website URL (optional)",
-      "generate": "GENERATE",
-      "save": "SAVE"
-    },
-    "extension": {
-      "title": "SETTINGS",
-      "get_addon": "Firefox Extension",
-      "enable": "Enable autofill server",
-      "running": "● Server running on 127.0.0.1",
-      "stopped": "○ Server stopped",
-      "port": "Port",
-      "token": "Pairing token",
-      "regenerate": "Regenerate token",
-      "launch": "Allow the browser to open this app (securevault://)",
-      "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked.",
-      "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only.",
-      "tamper": "Lock instantly if a debugger attaches",
-      "tamper_hint": "Anti-tampering: instantly locks the vault if a debugger attaches to the app. Off by default; it may cause antivirus false positives."
-    },
-    "backup": {
-      "title": "VAULT BACKUP",
-      "no_onedrive": "OneDrive was not found on this PC. Sign in to OneDrive and try again.",
-      "onedrive_found": "OneDrive folder",
-      "linked": "● Vault is backed up",
-      "not_linked": "Your vault is stored locally only.",
-      "create": "Back up to OneDrive Folder",
-      "remove": "Remove backup link",
-      "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator.",
-      "choose": "Back up to a custom folder…",
-      "waiting": "Waiting for permission…",
-      "denied": "Permission was denied.",
-      "or": "OR"
-    },
-    "details": {
-      "username_label": "Username:",
-      "password_label": "Password:",
-      "modify": "MODIFY",
-      "delete": "DELETE",
-      "delete_confirm": "Delete {service}?"
-    },
-    "list_all": {
-      "title": "ALL ACCOUNTS"
-    },
-    "generator": {
-      "title": "SECURE PASSWORD GENERATOR",
-      "length": "Length: {n}",
-      "uppercase": "Uppercase (A–Z)",
-      "numbers": "Numbers (0–9)",
-      "symbols": "Symbols (!@#)",
-      "regenerate": "REGENERATE",
-      "copy": "COPY",
-      "copied": "COPIED!"
-    },
-    "import": {
-      "title": "Import vault",
-      "prompt": "Link to this file so it stays where it is (e.g. for OneDrive backup)?\n\nYes = Link    No = Move it here"
-    }
+ "en": {
+  "auth": {
+   "title": "Password Manager",
+   "placeholder": "insert master password",
+   "login_btn": "Unlock",
+   "generate_btn": "Generate a password",
+   "tray": "Keep running in tray on close",
+   "correct": "Unlocked",
+   "wrong": "Wrong password",
+   "weak": "Weak master password — use 12+ characters with mixed types",
+   "import_btn": "I already have a vault",
+   "subtitle": "Offline, zero-knowledge vault",
+   "master_label": "Master password",
+   "create_title": "Create your vault",
+   "create_subtitle": "Pick a master password. It is never stored and cannot be recovered, so make it one you will remember.",
+   "create_btn": "Create vault",
+   "requirement": "12+ characters with mixed types",
+   "locked_idle": "Vault locked after inactivity."
   },
-  "it": {
-    "auth": {
-      "title": "Gestore Password",
-      "placeholder": "inserisci password maestro",
-      "login_btn": "Accedi",
-      "generate_btn": "Genera una Password",
-      "tray": "Mantieni attivo nella tray alla chiusura",
-      "correct": "PASSWORD CORRETTA",
-      "wrong": "PASSWORD ERRATA",
-      "weak": "Password maestra debole — usa 12+ caratteri di tipi diversi",
-      "import_btn": "Ho già un vault"
-    },
-    "tray": {
-      "open": "Apri Secure Vault",
-      "quit": "Esci"
-    },
-    "changepw": {
-      "title": "CAMBIA PASSWORD MAESTRA",
-      "current": "Password attuale",
-      "new": "Nuova password",
-      "confirm": "Conferma nuova password",
-      "save": "Cambia password",
-      "mismatch": "Le nuove password non corrispondono",
-      "wrong": "La password attuale non è corretta",
-      "success": "Password maestra cambiata"
-    },
-    "security": {
-      "tamper_title": "Sicurezza",
-      "tamper_msg": "È stato rilevato un debugger collegato a Secure Vault. Il vault è stato bloccato.",
-      "tamper_notice_title": "Anti-manomissione disponibile",
-      "tamper_notice_msg": "Secure Vault può bloccarsi subito se un debugger si collega. Questa protezione è DISATTIVATA per impostazione predefinita — puoi attivarla quando vuoi nella scheda impostazioni (ingranaggio)."
-    },
-    "dashboard": {
-      "title": "ACCOUNT",
-      "logout": "Esci",
-      "no_accounts": "nessun account trovato",
-      "no_results": "nessun account corrispondente",
-      "search": "Cerca account...",
-      "sort_name_asc": "Nome (A–Z)",
-      "sort_name_desc": "Nome (Z–A)",
-      "sort_time_new": "Più recenti",
-      "sort_time_old": "Più vecchi",
-      "add_btn": "Aggiungi Account",
-      "list_all": "Mostra Tutti",
-      "gen_pass": "Genera Password"
-    },
-    "forms": {
-      "new_title": "NUOVO ACCOUNT",
-      "modify_title": "MODIFICA {service}",
-      "account": "Account",
-      "username": "Nome utente",
-      "password": "Password",
-      "url": "URL del sito (facoltativo)",
-      "generate": "GENERA",
-      "save": "SALVA"
-    },
-    "extension": {
-      "title": "IMPOSTAZIONI",
-      "get_addon": "Estensione Firefox",
-      "enable": "Abilita server di compilazione",
-      "running": "● Server attivo su 127.0.0.1",
-      "stopped": "○ Server fermo",
-      "port": "Porta",
-      "token": "Token di abbinamento",
-      "regenerate": "Rigenera token",
-      "launch": "Permetti al browser di aprire questa app (securevault://)",
-      "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato.",
-      "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente.",
-      "tamper": "Blocca subito se un debugger si collega",
-      "tamper_hint": "Anti-manomissione: blocca subito il vault se un debugger si collega all'app. Disattivato per impostazione predefinita; può causare falsi positivi negli antivirus."
-    },
-    "backup": {
-      "title": "BACKUP VAULT",
-      "no_onedrive": "OneDrive non è stato trovato su questo PC. Accedi a OneDrive e riprova.",
-      "onedrive_found": "Cartella OneDrive",
-      "linked": "● Il vault è salvato",
-      "not_linked": "Il tuo vault è memorizzato solo localmente.",
-      "create": "Backup nella cartella OneDrive",
-      "remove": "Rimuovi collegamento di backup",
-      "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore.",
-      "choose": "Backup in una cartella personalizzata…",
-      "waiting": "In attesa dell'autorizzazione…",
-      "denied": "Autorizzazione negata.",
-      "or": "OPPURE"
-    },
-    "details": {
-      "username_label": "Nome utente:",
-      "password_label": "Password:",
-      "modify": "MODIFICA",
-      "delete": "ELIMINA",
-      "delete_confirm": "Eliminare {service}?"
-    },
-    "list_all": {
-      "title": "TUTTI GLI ACCOUNT"
-    },
-    "generator": {
-      "title": "GENERATORE PASSWORD SICURE",
-      "length": "Lunghezza: {n}",
-      "uppercase": "Maiuscole (A–Z)",
-      "numbers": "Numeri (0–9)",
-      "symbols": "Simboli (!@#)",
-      "regenerate": "RIGENERA",
-      "copy": "COPIA",
-      "copied": "COPIATA!"
-    },
-    "import": {
-      "title": "Importa vault",
-      "prompt": "Collegare questo file lasciandolo dov'è (es. per il backup OneDrive)?\n\nSì = Collega    No = Sposta qui"
-    }
+  "tray": {
+   "open": "Open Secure Vault",
+   "quit": "Quit"
   },
-  "fr": {
-    "auth": {
-      "title": "Gestionnaire de Mots de Passe",
-      "placeholder": "insérer le mot de passe maître",
-      "login_btn": "Connexion",
-      "generate_btn": "Générer un mot de passe",
-      "tray": "Garder actif dans la barre d'état à la fermeture",
-      "correct": "CORRECT",
-      "wrong": "MAUVAIS MOT DE PASSE",
-      "weak": "Mot de passe maître faible — utilisez 12+ caractères variés",
-      "import_btn": "J'ai déjà un coffre"
-    },
-    "tray": {
-      "open": "Ouvrir Secure Vault",
-      "quit": "Quitter"
-    },
-    "changepw": {
-      "title": "CHANGER LE MOT DE PASSE MAÎTRE",
-      "current": "Mot de passe actuel",
-      "new": "Nouveau mot de passe",
-      "confirm": "Confirmer le nouveau mot de passe",
-      "save": "Changer le mot de passe",
-      "mismatch": "Les nouveaux mots de passe ne correspondent pas",
-      "wrong": "Le mot de passe actuel est incorrect",
-      "success": "Mot de passe maître modifié"
-    },
-    "security": {
-      "tamper_title": "Sécurité",
-      "tamper_msg": "Un débogueur a été détecté en train de s'attacher à Secure Vault. Le coffre a été verrouillé.",
-      "tamper_notice_title": "Anti-altération disponible",
-      "tamper_notice_msg": "Secure Vault peut se verrouiller immédiatement si un débogueur s'attache. Cette protection est DÉSACTIVÉE par défaut — vous pouvez l'activer à tout moment dans l'onglet paramètres (engrenage)."
-    },
-    "dashboard": {
-      "title": "COMPTES",
-      "logout": "Déconnexion",
-      "no_accounts": "aucun compte trouvé",
-      "no_results": "aucun compte correspondant",
-      "search": "Rechercher des comptes...",
-      "sort_name_asc": "Nom (A–Z)",
-      "sort_name_desc": "Nom (Z–A)",
-      "sort_time_new": "Plus récents",
-      "sort_time_old": "Plus anciens",
-      "add_btn": "Ajouter un compte",
-      "list_all": "Tout lister",
-      "gen_pass": "Générateur de mots de passe"
-    },
-    "forms": {
-      "new_title": "NOUVEAU COMPTE",
-      "modify_title": "MODIFIER {service}",
-      "account": "Compte",
-      "username": "Nom d'utilisateur",
-      "password": "Mot de passe",
-      "url": "URL du site (facultatif)",
-      "generate": "GÉNÉRER",
-      "save": "ENREGISTRER"
-    },
-    "extension": {
-      "title": "PARAMÈTRES",
-      "get_addon": "Extension Firefox",
-      "enable": "Activer le serveur de remplissage",
-      "running": "● Serveur actif sur 127.0.0.1",
-      "stopped": "○ Serveur arrêté",
-      "port": "Port",
-      "token": "Jeton d'appairage",
-      "regenerate": "Régénérer le jeton",
-      "launch": "Autoriser le navigateur à ouvrir cette app (securevault://)",
-      "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé.",
-      "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement.",
-      "tamper": "Verrouiller si un débogueur s'attache",
-      "tamper_hint": "Anti-altération : verrouille immédiatement le coffre si un débogueur s'attache à l'application. Désactivé par défaut ; peut provoquer des faux positifs antivirus."
-    },
-    "backup": {
-      "title": "SAUVEGARDE DU COFFRE",
-      "no_onedrive": "OneDrive est introuvable sur ce PC. Connectez-vous à OneDrive et réessayez.",
-      "onedrive_found": "Dossier OneDrive",
-      "linked": "● Le coffre est sauvegardé",
-      "not_linked": "Votre coffre est stocké localement uniquement.",
-      "create": "Sauvegarder dans le dossier OneDrive",
-      "remove": "Supprimer le lien de sauvegarde",
-      "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur.",
-      "choose": "Sauvegarder dans un dossier personnalisé…",
-      "waiting": "En attente de l'autorisation…",
-      "denied": "Autorisation refusée.",
-      "or": "OU"
-    },
-    "details": {
-      "username_label": "Nom d'utilisateur :",
-      "password_label": "Mot de passe :",
-      "modify": "MODIFIER",
-      "delete": "SUPPRIMER",
-      "delete_confirm": "Supprimer {service} ?"
-    },
-    "list_all": {
-      "title": "TOUS LES COMPTES"
-    },
-    "generator": {
-      "title": "GÉNÉRATEUR DE MOTS DE PASSE SÉCURISÉS",
-      "length": "Longueur : {n}",
-      "uppercase": "Majuscules (A–Z)",
-      "numbers": "Chiffres (0–9)",
-      "symbols": "Symboles (!@#)",
-      "regenerate": "RÉGÉNÉRER",
-      "copy": "COPIER",
-      "copied": "COPIÉ !"
-    },
-    "import": {
-      "title": "Importer le coffre",
-      "prompt": "Lier ce fichier pour le laisser où il est (p. ex. pour la sauvegarde OneDrive)?\n\nOui = Lier    Non = Déplacer ici"
-    }
+  "changepw": {
+   "title": "Change master password",
+   "current": "Current password",
+   "new": "New password",
+   "confirm": "Confirm new password",
+   "save": "Change password",
+   "mismatch": "New passwords don't match",
+   "wrong": "Current password is incorrect",
+   "success": "Master password changed",
+   "match": "Passwords match"
   },
-  "da": {
-    "auth": {
-      "title": "Password Administrator",
-      "placeholder": "indtast master-adgangskode",
-      "login_btn": "Log ind",
-      "generate_btn": "Generer en adgangskode",
-      "tray": "Behold kørende i proceslinjen ved lukning",
-      "correct": "KORREKT",
-      "wrong": "FORKERT ADGANGSKODE",
-      "weak": "Svag hovedadgangskode — brug 12+ tegn af blandede typer",
-      "import_btn": "Jeg har allerede en boks"
-    },
-    "tray": {
-      "open": "Åbn Secure Vault",
-      "quit": "Afslut"
-    },
-    "changepw": {
-      "title": "SKIFT HOVEDADGANGSKODE",
-      "current": "Nuværende adgangskode",
-      "new": "Ny adgangskode",
-      "confirm": "Bekræft ny adgangskode",
-      "save": "Skift adgangskode",
-      "mismatch": "De nye adgangskoder matcher ikke",
-      "wrong": "Den nuværende adgangskode er forkert",
-      "success": "Hovedadgangskode ændret"
-    },
-    "security": {
-      "tamper_title": "Sikkerhed",
-      "tamper_msg": "En debugger blev registreret tilknyttet Secure Vault. Boksen er blevet låst.",
-      "tamper_notice_title": "Anti-manipulation tilgængelig",
-      "tamper_notice_msg": "Secure Vault kan låse sig selv med det samme, hvis en debugger tilknyttes. Denne beskyttelse er SLÅET FRA som standard — du kan slå den til når som helst under indstillinger (tandhjul)."
-    },
-    "dashboard": {
-      "title": "KONTI",
-      "logout": "Log ud",
-      "no_accounts": "ingen konti fundet",
-      "no_results": "ingen matchende konti",
-      "search": "Søg konti...",
-      "sort_name_asc": "Navn (A–Z)",
-      "sort_name_desc": "Navn (Z–A)",
-      "sort_time_new": "Nyeste først",
-      "sort_time_old": "Ældste først",
-      "add_btn": "Tilføj konto",
-      "list_all": "Vis alle",
-      "gen_pass": "Password Generator"
-    },
-    "forms": {
-      "new_title": "NY KONTO",
-      "modify_title": "REDIGER {service}",
-      "account": "Konto",
-      "username": "Brugernavn",
-      "password": "Adgangskode",
-      "url": "Websted-URL (valgfri)",
-      "generate": "GENERER",
-      "save": "GEM"
-    },
-    "extension": {
-      "title": "INDSTILLINGER",
-      "get_addon": "Firefox-udvidelse",
-      "enable": "Aktivér autofyld-server",
-      "running": "● Server kører på 127.0.0.1",
-      "stopped": "○ Server stoppet",
-      "port": "Port",
-      "token": "Parringstoken",
-      "regenerate": "Forny token",
-      "launch": "Tillad browseren at åbne denne app (securevault://)",
-      "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op.",
-      "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger.",
-      "tamper": "Lås straks hvis en debugger tilknyttes",
-      "tamper_hint": "Anti-manipulation: låser straks boksen, hvis en debugger tilknyttes appen. Slået fra som standard; kan udløse falske antivirus-alarmer."
-    },
-    "backup": {
-      "title": "BACKUP AF BOKS",
-      "no_onedrive": "OneDrive blev ikke fundet på denne pc. Log ind på OneDrive, og prøv igen.",
-      "onedrive_found": "OneDrive-mappe",
-      "linked": "● Boksen er sikkerhedskopieret",
-      "not_linked": "Din boks gemmes kun lokalt.",
-      "create": "Sikkerhedskopiér til OneDrive-mappen",
-      "remove": "Fjern backup-link",
-      "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator.",
-      "choose": "Sikkerhedskopiér til en valgfri mappe…",
-      "waiting": "Venter på tilladelse…",
-      "denied": "Tilladelse blev nægtet.",
-      "or": "ELLER"
-    },
-    "details": {
-      "username_label": "Brugernavn:",
-      "password_label": "Adgangskode:",
-      "modify": "REDIGER",
-      "delete": "SLET",
-      "delete_confirm": "Slet {service}?"
-    },
-    "list_all": {
-      "title": "ALLE KONTI"
-    },
-    "generator": {
-      "title": "SIKKER PASSWORD GENERATOR",
-      "length": "Længde: {n}",
-      "uppercase": "Store bogstaver (A–Z)",
-      "numbers": "Tal (0–9)",
-      "symbols": "Symboler (!@#)",
-      "regenerate": "GENERER IGEN",
-      "copy": "KOPIÉR",
-      "copied": "KOPIERET!"
-    },
-    "import": {
-      "title": "Importér boks",
-      "prompt": "Link til denne fil, så den bliver, hvor den er (f.eks. til OneDrive-backup)?\n\nJa = Link    Nej = Flyt hertil"
-    }
+  "security": {
+   "tamper_title": "Security",
+   "tamper_msg": "A debugger was detected attaching to Secure Vault. The vault has been locked.",
+   "tamper_notice_title": "Anti-tampering available",
+   "tamper_notice_msg": "Secure Vault can lock itself instantly if a debugger attaches to it. This protection is OFF by default — you can turn it on anytime in the settings (gear) tab.",
+   "idle_title": "Still there?",
+   "idle_msg": "The vault locks in {n} seconds.",
+   "idle_stay": "Stay unlocked"
+  },
+  "dashboard": {
+   "title": "Accounts",
+   "logout": "Log out",
+   "no_accounts": "no accounts found",
+   "no_results": "no matching accounts",
+   "search": "Search accounts...",
+   "sort_name_asc": "Name (A–Z)",
+   "sort_name_desc": "Name (Z–A)",
+   "sort_time_new": "Newest first",
+   "sort_time_old": "Oldest first",
+   "add_btn": "Add account",
+   "list_all": "List All",
+   "gen_pass": "Password generator",
+   "copy_password": "Copy password",
+   "favourite": "Favourite",
+   "count": "{n} accounts",
+   "count_one": "1 account"
+  },
+  "forms": {
+   "new_title": "New account",
+   "modify_title": "Edit {service}",
+   "account": "Account",
+   "username": "Username",
+   "password": "Password",
+   "url": "Website URL (optional)",
+   "generate": "Generate",
+   "save": "Save",
+   "account_ph": "e.g. GitHub",
+   "username_ph": "username or email",
+   "save_account": "Save account",
+   "required": "Enter an account name.",
+   "duplicate": "An account with that name already exists."
+  },
+  "extension": {
+   "title": "Settings",
+   "get_addon": "Firefox Extension",
+   "enable": "Enable autofill server",
+   "running": "● Server running on 127.0.0.1",
+   "stopped": "○ Server stopped",
+   "port": "Port",
+   "token": "Pairing token",
+   "regenerate": "Regenerate token",
+   "launch": "Allow the browser to open this app (securevault://)",
+   "hint": "Load the Firefox add-on, then paste this port and token into its options to pair. Credentials are only served on 127.0.0.1:{port} while the vault is unlocked.",
+   "launch_hint": "Lets the extension launch or focus this app when you ask it to generate or save a password. Registers a securevault:// link for your user only.",
+   "tamper": "Lock instantly if a debugger attaches",
+   "tamper_hint": "Anti-tampering: instantly locks the vault if a debugger attaches to the app. Off by default; it may cause antivirus false positives.",
+   "section_bridge": "Autofill bridge",
+   "section_security": "Security guard"
+  },
+  "backup": {
+   "title": "Vault backup",
+   "no_onedrive": "OneDrive was not found on this PC. Sign in to OneDrive and try again.",
+   "onedrive_found": "OneDrive folder",
+   "linked": "● Vault is backed up",
+   "not_linked": "Your vault is stored locally only.",
+   "create": "Back up to OneDrive Folder",
+   "remove": "Remove backup link",
+   "hint": "This moves your encrypted vault into OneDrive and leaves a link in its place, so every change syncs as a backup. Only the encrypted file is stored — your master password is never uploaded. Creating the link may require Windows Developer Mode or running as administrator.",
+   "choose": "Back up to a custom folder…",
+   "waiting": "Waiting for permission…",
+   "denied": "Permission was denied.",
+   "or": "OR",
+   "waiting_n": "Waiting for permission… ({n}s)",
+   "path_label": "Backup location"
+  },
+  "details": {
+   "username_label": "Username:",
+   "password_label": "Password:",
+   "modify": "Edit",
+   "delete": "Delete",
+   "delete_confirm": "Delete {service}?",
+   "title": "Account detail",
+   "url_label": "Website URL",
+   "created": "Added {date}",
+   "no_url": "Not set",
+   "copy_hint": "The clipboard is cleared {n}s after copying"
+  },
+  "list_all": {
+   "title": "ALL ACCOUNTS"
+  },
+  "generator": {
+   "title": "Password generator",
+   "length": "Length: {n}",
+   "uppercase": "Uppercase (A–Z)",
+   "numbers": "Numbers (0–9)",
+   "symbols": "Symbols (!@#)",
+   "regenerate": "Regenerate",
+   "copy": "Copy",
+   "copied": "Copied",
+   "strength": "{label} · {n} bits of entropy"
+  },
+  "import": {
+   "title": "Import vault",
+   "prompt": "Link to this file so it stays where it is (e.g. for OneDrive backup)?\n\nYes = Link    No = Move it here",
+   "prompt_modal": "Link to this file so it stays where it is (for a cloud backup), or move it into the app folder?"
+  },
+  "strength": {
+   "0": "very weak",
+   "1": "weak",
+   "2": "fair",
+   "3": "good",
+   "4": "strong"
+  },
+  "modal": {
+   "ok": "OK",
+   "cancel": "Cancel",
+   "confirm": "Confirm",
+   "delete": "Delete",
+   "link": "Link to it",
+   "move": "Move it here",
+   "save_failed_title": "Save failed",
+   "save_failed_msg": "The vault could not be written to disk. Your change was not saved."
   }
+ },
+ "it": {
+  "auth": {
+   "title": "Gestore Password",
+   "placeholder": "inserisci password maestro",
+   "login_btn": "Sblocca",
+   "generate_btn": "Genera una password",
+   "tray": "Mantieni attivo nella tray alla chiusura",
+   "correct": "Sbloccata",
+   "wrong": "Password errata",
+   "weak": "Password maestra debole — usa 12+ caratteri di tipi diversi",
+   "import_btn": "Ho già un vault",
+   "subtitle": "Cassaforte offline, zero-knowledge",
+   "master_label": "Password principale",
+   "create_title": "Crea la tua cassaforte",
+   "create_subtitle": "Scegli una password principale. Non viene mai salvata e non può essere recuperata, quindi sceglila memorabile.",
+   "create_btn": "Crea cassaforte",
+   "requirement": "Almeno 12 caratteri di tipi diversi",
+   "locked_idle": "Cassaforte bloccata per inattività."
+  },
+  "tray": {
+   "open": "Apri Secure Vault",
+   "quit": "Esci"
+  },
+  "changepw": {
+   "title": "Cambia password principale",
+   "current": "Password attuale",
+   "new": "Nuova password",
+   "confirm": "Conferma nuova password",
+   "save": "Cambia password",
+   "mismatch": "Le nuove password non corrispondono",
+   "wrong": "La password attuale non è corretta",
+   "success": "Password maestra cambiata",
+   "match": "Le password coincidono"
+  },
+  "security": {
+   "tamper_title": "Sicurezza",
+   "tamper_msg": "È stato rilevato un debugger collegato a Secure Vault. Il vault è stato bloccato.",
+   "tamper_notice_title": "Anti-manomissione disponibile",
+   "tamper_notice_msg": "Secure Vault può bloccarsi subito se un debugger si collega. Questa protezione è DISATTIVATA per impostazione predefinita — puoi attivarla quando vuoi nella scheda impostazioni (ingranaggio).",
+   "idle_title": "Ci sei ancora?",
+   "idle_msg": "La cassaforte si blocca tra {n} secondi.",
+   "idle_stay": "Resta sbloccata"
+  },
+  "dashboard": {
+   "title": "Account",
+   "logout": "Esci",
+   "no_accounts": "nessun account trovato",
+   "no_results": "nessun account corrispondente",
+   "search": "Cerca account...",
+   "sort_name_asc": "Nome (A–Z)",
+   "sort_name_desc": "Nome (Z–A)",
+   "sort_time_new": "Più recenti",
+   "sort_time_old": "Più vecchi",
+   "add_btn": "Aggiungi account",
+   "list_all": "Mostra Tutti",
+   "gen_pass": "Generatore di password",
+   "copy_password": "Copia password",
+   "favourite": "Preferito",
+   "count": "{n} account",
+   "count_one": "1 account"
+  },
+  "forms": {
+   "new_title": "Nuovo account",
+   "modify_title": "Modifica {service}",
+   "account": "Account",
+   "username": "Nome utente",
+   "password": "Password",
+   "url": "URL del sito (facoltativo)",
+   "generate": "Genera",
+   "save": "Salva",
+   "account_ph": "es. GitHub",
+   "username_ph": "nome utente o email",
+   "save_account": "Salva account",
+   "required": "Inserisci il nome dell'account.",
+   "duplicate": "Esiste già un account con questo nome."
+  },
+  "extension": {
+   "title": "Impostazioni",
+   "get_addon": "Estensione Firefox",
+   "enable": "Abilita server di compilazione",
+   "running": "● Server attivo su 127.0.0.1",
+   "stopped": "○ Server fermo",
+   "port": "Porta",
+   "token": "Token di abbinamento",
+   "regenerate": "Rigenera token",
+   "launch": "Permetti al browser di aprire questa app (securevault://)",
+   "hint": "Carica il componente per Firefox, poi incolla questa porta e questo token nelle sue opzioni per abbinarlo. Le credenziali sono fornite solo su 127.0.0.1:{port} quando il vault è sbloccato.",
+   "launch_hint": "Permette all'estensione di avviare o portare in primo piano questa app quando chiedi di generare o salvare una password. Registra un collegamento securevault:// solo per il tuo utente.",
+   "tamper": "Blocca subito se un debugger si collega",
+   "tamper_hint": "Anti-manomissione: blocca subito il vault se un debugger si collega all'app. Disattivato per impostazione predefinita; può causare falsi positivi negli antivirus.",
+   "section_bridge": "Ponte di compilazione",
+   "section_security": "Protezione"
+  },
+  "backup": {
+   "title": "Backup della cassaforte",
+   "no_onedrive": "OneDrive non è stato trovato su questo PC. Accedi a OneDrive e riprova.",
+   "onedrive_found": "Cartella OneDrive",
+   "linked": "● Il vault è salvato",
+   "not_linked": "Il tuo vault è memorizzato solo localmente.",
+   "create": "Backup nella cartella OneDrive",
+   "remove": "Rimuovi collegamento di backup",
+   "hint": "Questo sposta il vault cifrato in OneDrive e lascia un collegamento al suo posto, così ogni modifica viene sincronizzata come backup. Viene caricato solo il file cifrato — la password maestra non viene mai inviata. La creazione del collegamento può richiedere la Modalità sviluppatore di Windows o l'esecuzione come amministratore.",
+   "choose": "Backup in una cartella personalizzata…",
+   "waiting": "In attesa dell'autorizzazione…",
+   "denied": "Autorizzazione negata.",
+   "or": "OPPURE",
+   "waiting_n": "In attesa dell'autorizzazione… ({n}s)",
+   "path_label": "Posizione del backup"
+  },
+  "details": {
+   "username_label": "Nome utente:",
+   "password_label": "Password:",
+   "modify": "Modifica",
+   "delete": "Elimina",
+   "delete_confirm": "Eliminare {service}?",
+   "title": "Dettagli account",
+   "url_label": "Indirizzo del sito",
+   "created": "Aggiunto il {date}",
+   "no_url": "Non impostato",
+   "copy_hint": "Gli appunti vengono svuotati {n}s dopo la copia"
+  },
+  "list_all": {
+   "title": "TUTTI GLI ACCOUNT"
+  },
+  "generator": {
+   "title": "Generatore di password",
+   "length": "Lunghezza: {n}",
+   "uppercase": "Maiuscole (A–Z)",
+   "numbers": "Numeri (0–9)",
+   "symbols": "Simboli (!@#)",
+   "regenerate": "Rigenera",
+   "copy": "Copia",
+   "copied": "Copiato",
+   "strength": "{label} · {n} bit di entropia"
+  },
+  "import": {
+   "title": "Importa vault",
+   "prompt": "Collegare questo file lasciandolo dov'è (es. per il backup OneDrive)?\n\nSì = Collega    No = Sposta qui",
+   "prompt_modal": "Collegare questo file lasciandolo dov'è (per un backup sul cloud) o spostarlo nella cartella dell'app?"
+  },
+  "strength": {
+   "0": "molto debole",
+   "1": "debole",
+   "2": "discreta",
+   "3": "buona",
+   "4": "forte"
+  },
+  "modal": {
+   "ok": "OK",
+   "cancel": "Annulla",
+   "confirm": "Conferma",
+   "delete": "Elimina",
+   "link": "Collega",
+   "move": "Sposta qui",
+   "save_failed_title": "Salvataggio non riuscito",
+   "save_failed_msg": "Non è stato possibile scrivere la cassaforte su disco. La modifica non è stata salvata."
+  }
+ },
+ "fr": {
+  "auth": {
+   "title": "Gestionnaire de Mots de Passe",
+   "placeholder": "insérer le mot de passe maître",
+   "login_btn": "Déverrouiller",
+   "generate_btn": "Générer un mot de passe",
+   "tray": "Garder actif dans la barre d'état à la fermeture",
+   "correct": "Déverrouillé",
+   "wrong": "Mot de passe incorrect",
+   "weak": "Mot de passe maître faible — utilisez 12+ caractères variés",
+   "import_btn": "J'ai déjà un coffre",
+   "subtitle": "Coffre hors ligne, zero-knowledge",
+   "master_label": "Mot de passe maître",
+   "create_title": "Créez votre coffre",
+   "create_subtitle": "Choisissez un mot de passe maître. Il n'est jamais stocké et ne peut pas être récupéré : choisissez-en un dont vous vous souviendrez.",
+   "create_btn": "Créer le coffre",
+   "requirement": "12 caractères minimum, types variés",
+   "locked_idle": "Coffre verrouillé après inactivité."
+  },
+  "tray": {
+   "open": "Ouvrir Secure Vault",
+   "quit": "Quitter"
+  },
+  "changepw": {
+   "title": "Changer le mot de passe maître",
+   "current": "Mot de passe actuel",
+   "new": "Nouveau mot de passe",
+   "confirm": "Confirmer le nouveau mot de passe",
+   "save": "Changer le mot de passe",
+   "mismatch": "Les nouveaux mots de passe ne correspondent pas",
+   "wrong": "Le mot de passe actuel est incorrect",
+   "success": "Mot de passe maître modifié",
+   "match": "Les mots de passe correspondent"
+  },
+  "security": {
+   "tamper_title": "Sécurité",
+   "tamper_msg": "Un débogueur a été détecté en train de s'attacher à Secure Vault. Le coffre a été verrouillé.",
+   "tamper_notice_title": "Anti-altération disponible",
+   "tamper_notice_msg": "Secure Vault peut se verrouiller immédiatement si un débogueur s'attache. Cette protection est DÉSACTIVÉE par défaut — vous pouvez l'activer à tout moment dans l'onglet paramètres (engrenage).",
+   "idle_title": "Toujours là ?",
+   "idle_msg": "Le coffre se verrouille dans {n} secondes.",
+   "idle_stay": "Rester déverrouillé"
+  },
+  "dashboard": {
+   "title": "Comptes",
+   "logout": "Se déconnecter",
+   "no_accounts": "aucun compte trouvé",
+   "no_results": "aucun compte correspondant",
+   "search": "Rechercher des comptes...",
+   "sort_name_asc": "Nom (A–Z)",
+   "sort_name_desc": "Nom (Z–A)",
+   "sort_time_new": "Plus récents",
+   "sort_time_old": "Plus anciens",
+   "add_btn": "Ajouter un compte",
+   "list_all": "Tout lister",
+   "gen_pass": "Générateur",
+   "copy_password": "Copier le mot de passe",
+   "favourite": "Favori",
+   "count": "{n} comptes",
+   "count_one": "1 compte"
+  },
+  "forms": {
+   "new_title": "Nouveau compte",
+   "modify_title": "Modifier {service}",
+   "account": "Compte",
+   "username": "Nom d'utilisateur",
+   "password": "Mot de passe",
+   "url": "URL du site (facultatif)",
+   "generate": "Générer",
+   "save": "Enregistrer",
+   "account_ph": "ex. GitHub",
+   "username_ph": "identifiant ou e-mail",
+   "save_account": "Enregistrer",
+   "required": "Saisissez un nom de compte.",
+   "duplicate": "Un compte portant ce nom existe déjà."
+  },
+  "extension": {
+   "title": "Paramètres",
+   "get_addon": "Extension Firefox",
+   "enable": "Activer le serveur de remplissage",
+   "running": "● Serveur actif sur 127.0.0.1",
+   "stopped": "○ Serveur arrêté",
+   "port": "Port",
+   "token": "Jeton d'appairage",
+   "regenerate": "Régénérer le jeton",
+   "launch": "Autoriser le navigateur à ouvrir cette app (securevault://)",
+   "hint": "Chargez le module Firefox, puis collez ce port et ce jeton dans ses options pour l'appairer. Les identifiants ne sont fournis que sur 127.0.0.1:{port} lorsque le coffre est déverrouillé.",
+   "launch_hint": "Permet à l'extension de lancer ou d'afficher cette app lorsque vous demandez de générer ou d'enregistrer un mot de passe. Enregistre un lien securevault:// pour votre utilisateur uniquement.",
+   "tamper": "Verrouiller si un débogueur s'attache",
+   "tamper_hint": "Anti-altération : verrouille immédiatement le coffre si un débogueur s'attache à l'application. Désactivé par défaut ; peut provoquer des faux positifs antivirus.",
+   "section_bridge": "Pont de remplissage",
+   "section_security": "Protection"
+  },
+  "backup": {
+   "title": "Sauvegarde du coffre",
+   "no_onedrive": "OneDrive est introuvable sur ce PC. Connectez-vous à OneDrive et réessayez.",
+   "onedrive_found": "Dossier OneDrive",
+   "linked": "● Le coffre est sauvegardé",
+   "not_linked": "Votre coffre est stocké localement uniquement.",
+   "create": "Sauvegarder dans le dossier OneDrive",
+   "remove": "Supprimer le lien de sauvegarde",
+   "hint": "Ceci déplace votre coffre chiffré dans OneDrive et laisse un lien à sa place, afin que chaque modification soit synchronisée comme sauvegarde. Seul le fichier chiffré est stocké — votre mot de passe maître n'est jamais envoyé. La création du lien peut nécessiter le Mode développeur de Windows ou l'exécution en tant qu'administrateur.",
+   "choose": "Sauvegarder dans un dossier personnalisé…",
+   "waiting": "En attente de l'autorisation…",
+   "denied": "Autorisation refusée.",
+   "or": "OU",
+   "waiting_n": "En attente de l'autorisation… ({n}s)",
+   "path_label": "Emplacement de la sauvegarde"
+  },
+  "details": {
+   "username_label": "Nom d'utilisateur :",
+   "password_label": "Mot de passe :",
+   "modify": "Modifier",
+   "delete": "Supprimer",
+   "delete_confirm": "Supprimer {service} ?",
+   "title": "Détail du compte",
+   "url_label": "Adresse du site",
+   "created": "Ajouté le {date}",
+   "no_url": "Non défini",
+   "copy_hint": "Le presse-papiers est vidé {n}s après la copie"
+  },
+  "list_all": {
+   "title": "TOUS LES COMPTES"
+  },
+  "generator": {
+   "title": "Générateur de mots de passe",
+   "length": "Longueur : {n}",
+   "uppercase": "Majuscules (A–Z)",
+   "numbers": "Chiffres (0–9)",
+   "symbols": "Symboles (!@#)",
+   "regenerate": "Régénérer",
+   "copy": "Copier",
+   "copied": "Copié",
+   "strength": "{label} · {n} bits d'entropie"
+  },
+  "import": {
+   "title": "Importer le coffre",
+   "prompt": "Lier ce fichier pour le laisser où il est (p. ex. pour la sauvegarde OneDrive)?\n\nOui = Lier    Non = Déplacer ici",
+   "prompt_modal": "Lier ce fichier en le laissant où il est (pour une sauvegarde cloud), ou le déplacer dans le dossier de l'application ?"
+  },
+  "strength": {
+   "0": "très faible",
+   "1": "faible",
+   "2": "moyen",
+   "3": "bon",
+   "4": "fort"
+  },
+  "modal": {
+   "ok": "OK",
+   "cancel": "Annuler",
+   "confirm": "Confirmer",
+   "delete": "Supprimer",
+   "link": "Créer un lien",
+   "move": "Déplacer ici",
+   "save_failed_title": "Échec de l'enregistrement",
+   "save_failed_msg": "Le coffre n'a pas pu être écrit sur le disque. Votre modification n'a pas été enregistrée."
+  }
+ },
+ "da": {
+  "auth": {
+   "title": "Password Administrator",
+   "placeholder": "indtast master-adgangskode",
+   "login_btn": "Lås op",
+   "generate_btn": "Generer en adgangskode",
+   "tray": "Behold kørende i proceslinjen ved lukning",
+   "correct": "Låst op",
+   "wrong": "Forkert adgangskode",
+   "weak": "Svag hovedadgangskode — brug 12+ tegn af blandede typer",
+   "import_btn": "Jeg har allerede en boks",
+   "subtitle": "Offline boks uden videndeling",
+   "master_label": "Hovedadgangskode",
+   "create_title": "Opret din boks",
+   "create_subtitle": "Vælg en hovedadgangskode. Den gemmes aldrig og kan ikke gendannes, så vælg en, du kan huske.",
+   "create_btn": "Opret boks",
+   "requirement": "Mindst 12 tegn af blandede typer",
+   "locked_idle": "Boksen blev låst efter inaktivitet."
+  },
+  "tray": {
+   "open": "Åbn Secure Vault",
+   "quit": "Afslut"
+  },
+  "changepw": {
+   "title": "Skift hovedadgangskode",
+   "current": "Nuværende adgangskode",
+   "new": "Ny adgangskode",
+   "confirm": "Bekræft ny adgangskode",
+   "save": "Skift adgangskode",
+   "mismatch": "De nye adgangskoder matcher ikke",
+   "wrong": "Den nuværende adgangskode er forkert",
+   "success": "Hovedadgangskode ændret",
+   "match": "Adgangskoderne er ens"
+  },
+  "security": {
+   "tamper_title": "Sikkerhed",
+   "tamper_msg": "En debugger blev registreret tilknyttet Secure Vault. Boksen er blevet låst.",
+   "tamper_notice_title": "Anti-manipulation tilgængelig",
+   "tamper_notice_msg": "Secure Vault kan låse sig selv med det samme, hvis en debugger tilknyttes. Denne beskyttelse er SLÅET FRA som standard — du kan slå den til når som helst under indstillinger (tandhjul).",
+   "idle_title": "Er du der stadig?",
+   "idle_msg": "Boksen låses om {n} sekunder.",
+   "idle_stay": "Forbliv ulåst"
+  },
+  "dashboard": {
+   "title": "Konti",
+   "logout": "Log ud",
+   "no_accounts": "ingen konti fundet",
+   "no_results": "ingen matchende konti",
+   "search": "Søg konti...",
+   "sort_name_asc": "Navn (A–Z)",
+   "sort_name_desc": "Navn (Z–A)",
+   "sort_time_new": "Nyeste først",
+   "sort_time_old": "Ældste først",
+   "add_btn": "Tilføj konto",
+   "list_all": "Vis alle",
+   "gen_pass": "Adgangskodegenerator",
+   "copy_password": "Kopiér adgangskode",
+   "favourite": "Favorit",
+   "count": "{n} konti",
+   "count_one": "1 konto"
+  },
+  "forms": {
+   "new_title": "Ny konto",
+   "modify_title": "Rediger {service}",
+   "account": "Konto",
+   "username": "Brugernavn",
+   "password": "Adgangskode",
+   "url": "Websted-URL (valgfri)",
+   "generate": "Generer",
+   "save": "Gem",
+   "account_ph": "f.eks. GitHub",
+   "username_ph": "brugernavn eller e-mail",
+   "save_account": "Gem konto",
+   "required": "Indtast et kontonavn.",
+   "duplicate": "Der findes allerede en konto med det navn."
+  },
+  "extension": {
+   "title": "Indstillinger",
+   "get_addon": "Firefox-udvidelse",
+   "enable": "Aktivér autofyld-server",
+   "running": "● Server kører på 127.0.0.1",
+   "stopped": "○ Server stoppet",
+   "port": "Port",
+   "token": "Parringstoken",
+   "regenerate": "Forny token",
+   "launch": "Tillad browseren at åbne denne app (securevault://)",
+   "hint": "Indlæs Firefox-tilføjelsen, og indsæt derefter denne port og token i dens indstillinger for at parre. Adgangskoder leveres kun på 127.0.0.1:{port}, når boksen er låst op.",
+   "launch_hint": "Lader udvidelsen starte eller bringe denne app i forgrunden, når du beder om at generere eller gemme en adgangskode. Registrerer et securevault://-link kun for din bruger.",
+   "tamper": "Lås straks hvis en debugger tilknyttes",
+   "tamper_hint": "Anti-manipulation: låser straks boksen, hvis en debugger tilknyttes appen. Slået fra som standard; kan udløse falske antivirus-alarmer.",
+   "section_bridge": "Autofyld-bro",
+   "section_security": "Sikkerhedsvagt"
+  },
+  "backup": {
+   "title": "Sikkerhedskopi",
+   "no_onedrive": "OneDrive blev ikke fundet på denne pc. Log ind på OneDrive, og prøv igen.",
+   "onedrive_found": "OneDrive-mappe",
+   "linked": "● Boksen er sikkerhedskopieret",
+   "not_linked": "Din boks gemmes kun lokalt.",
+   "create": "Sikkerhedskopiér til OneDrive-mappen",
+   "remove": "Fjern backup-link",
+   "hint": "Dette flytter din krypterede boks til OneDrive og efterlader et link i stedet, så hver ændring synkroniseres som backup. Kun den krypterede fil gemmes — din hovedadgangskode uploades aldrig. Oprettelse af linket kan kræve Windows-udviklertilstand eller kørsel som administrator.",
+   "choose": "Sikkerhedskopiér til en valgfri mappe…",
+   "waiting": "Venter på tilladelse…",
+   "denied": "Tilladelse blev nægtet.",
+   "or": "ELLER",
+   "waiting_n": "Venter på tilladelse… ({n}s)",
+   "path_label": "Placering af sikkerhedskopi"
+  },
+  "details": {
+   "username_label": "Brugernavn:",
+   "password_label": "Adgangskode:",
+   "modify": "Rediger",
+   "delete": "Slet",
+   "delete_confirm": "Slet {service}?",
+   "title": "Kontodetaljer",
+   "url_label": "Webadresse",
+   "created": "Tilføjet {date}",
+   "no_url": "Ikke angivet",
+   "copy_hint": "Udklipsholderen ryddes {n}s efter kopiering"
+  },
+  "list_all": {
+   "title": "ALLE KONTI"
+  },
+  "generator": {
+   "title": "Adgangskodegenerator",
+   "length": "Længde: {n}",
+   "uppercase": "Store bogstaver (A–Z)",
+   "numbers": "Tal (0–9)",
+   "symbols": "Symboler (!@#)",
+   "regenerate": "Generer igen",
+   "copy": "Kopiér",
+   "copied": "Kopieret",
+   "strength": "{label} · {n} bits entropi"
+  },
+  "import": {
+   "title": "Importér boks",
+   "prompt": "Link til denne fil, så den bliver, hvor den er (f.eks. til OneDrive-backup)?\n\nJa = Link    Nej = Flyt hertil",
+   "prompt_modal": "Vil du linke til filen, hvor den ligger (til en cloud-sikkerhedskopi), eller flytte den ind i appens mappe?"
+  },
+  "strength": {
+   "0": "meget svag",
+   "1": "svag",
+   "2": "jævn",
+   "3": "god",
+   "4": "stærk"
+  },
+  "modal": {
+   "ok": "OK",
+   "cancel": "Annullér",
+   "confirm": "Bekræft",
+   "delete": "Slet",
+   "link": "Opret link",
+   "move": "Flyt hertil",
+   "save_failed_title": "Kunne ikke gemme",
+   "save_failed_msg": "Boksen kunne ikke skrives til disken. Din ændring blev ikke gemt."
+  }
+ }
 }

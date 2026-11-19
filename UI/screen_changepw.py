@@ -1,50 +1,78 @@
 """Change the master password (re-keys the vault to a new Argon2id key)."""
 import customtkinter as ctk
 
-from UI.theme import FONT_FAMILY, COLOR_SUCCESS, COLOR_SUCCESS_HOVER, COLOR_DANGER, COLOR_MUTED
-from UI.components import back_button
+from core import password_strength
+from UI import components as ui
+from UI import theme as T
 
 
 class ChangeMasterMixin:
     def show_change_master_screen(self):
         self.current_view = "changepw"
         self.clear_screen()
-        back_button(self)
-        ctk.CTkLabel(self.container, text=self.t("changepw.title"),
-                     font=(FONT_FAMILY, 22, "bold")).pack(pady=(0, 16))
+        ui.app_bar(self, back=self.show_dashboard, show_nav=True)
 
-        form = ctk.CTkFrame(self.container, fg_color="transparent")
-        form.pack(padx=40, fill="x")
+        body = ui.page(self)
+        ui.title(body, self.t("changepw.title")).pack(anchor="w")
 
-        def field(label_key):
-            ctk.CTkLabel(form, text=self.t(label_key), font=(FONT_FAMILY, 12, "bold")).pack(anchor="w")
-            e = ctk.CTkEntry(form, show="*", height=38)
-            e.pack(fill="x", pady=(2, 14))
-            return e
+        form = ctk.CTkFrame(body, fg_color="transparent")
+        form.pack(fill="x", pady=(T.GAP_L, 0))
+
+        def field(label_key, pady=(0, 0)):
+            ui.field_label(form, self.t(label_key)).pack(anchor="w", pady=pady)
+            row, entry = ui.secret_field(form, mono=False)
+            row.pack(fill="x", pady=(4, 0))
+            return entry
 
         current = field("changepw.current")
-        new = field("changepw.new")
-        confirm = field("changepw.confirm")
+        new = field("changepw.new", pady=(T.GAP, 0))
 
-        status = ctk.CTkLabel(self.container, text="", text_color=COLOR_DANGER,
-                              wraplength=400, justify="left")
-        status.pack(pady=(0, 4))
+        meter = ui.StrengthMeter(form)
+        meter.pack(fill="x", pady=(6, 0))
+        meter.reset(self.t("auth.requirement"))
+
+        confirm = field("changepw.confirm", pady=(T.GAP, 0))
+        match_line = ui.StatusLine(form)
+        match_line.pack(anchor="w", pady=(6, 0))
+
+        def on_new(_event=None):
+            value = new.get()
+            if not value:
+                meter.reset(self.t("auth.requirement"))
+            else:
+                result = password_strength.evaluate(value)
+                meter.set(result["score"], self.t("strength.%d" % result["score"]))
+            on_confirm()
+
+        def on_confirm(_event=None):
+            typed = confirm.get()
+            if not typed:
+                match_line.clear()
+            elif typed == new.get():
+                match_line.show("✓ " + self.t("changepw.match"), "positive")
+            else:
+                match_line.show(self.t("changepw.mismatch"), "negative")
+
+        new.bind("<KeyRelease>", on_new, add="+")
+        confirm.bind("<KeyRelease>", on_confirm, add="+")
+
+        status = ui.StatusLine(body, wraplength=420)
+        status.pack(anchor="w", pady=(T.GAP, 0))
 
         def submit():
             if new.get() != confirm.get():
-                status.configure(text=self.t("changepw.mismatch"), text_color=COLOR_DANGER)
+                status.show(self.t("changepw.mismatch"), "negative")
                 return
             result = self.change_master(current.get(), new.get())
             if result == "wrong_current":
-                status.configure(text=self.t("changepw.wrong"), text_color=COLOR_DANGER)
+                status.show(self.t("changepw.wrong"), "negative")
             elif result == "weak":
-                status.configure(text=self.t("auth.weak"), text_color=COLOR_DANGER)
+                status.show(self.t("auth.weak"), "negative")
             elif result == "save_failed":
-                status.configure(text="Save failed.", text_color=COLOR_DANGER)
+                status.show(self.t("modal.save_failed_msg"), "negative")
             elif result == "ok":
-                status.configure(text=self.t("changepw.success"), text_color=COLOR_SUCCESS)
+                status.show(self.t("changepw.success"), "positive")
                 self.after(900, self.show_dashboard)
 
-        ctk.CTkButton(self.container, text=self.t("changepw.save"), fg_color=COLOR_SUCCESS,
-                      hover_color=COLOR_SUCCESS_HOVER, height=40, width=220,
-                      command=submit).pack(pady=24)
+        bar = ui.footer(self)
+        ui.primary_button(bar, self.t("changepw.save"), submit, height=42).pack(fill="x")
