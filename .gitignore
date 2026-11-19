@@ -39,3 +39,4 @@ sec_*.py
 # installs upgrade in place instead of stacking up, so it must not be lost.
 !build.ps1
 !installer.iss
+installer.iss.bak
