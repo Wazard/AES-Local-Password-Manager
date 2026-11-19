@@ -67,28 +67,40 @@ final class VaultReceiver: ObservableObject {
     @Published private(set) var state = State.idle
     @Published private(set) var code = ""
     @Published private(set) var address: String?
+    /// False when iOS refused the Bonjour announcement, so the PC can't find
+    /// this iPhone by itself and the address has to be typed there.
+    @Published private(set) var announced = true
 
     private var listener: NWListener?
     private var wrongCodes = 0
 
     func start() {
-        stop()
         code = String(format: "%06d", Int.random(in: 0...999_999))
         wrongCodes = 0
+        listen(announce: true)
+    }
+
+    private func listen(announce: Bool) {
+        stop()
+        announced = announce
         address = Self.wifiAddress()
         do {
             let parameters = NWParameters.tcp
             parameters.allowLocalEndpointReuse = true
             let listener = try NWListener(using: parameters, on: Self.port)
-            listener.service = NWListener.Service(name: UIDevice.current.name, type: Self.serviceType)
+            if announce {
+                listener.service = NWListener.Service(name: UIDevice.current.name, type: Self.serviceType)
+            }
             listener.newConnectionHandler = { [weak self] connection in
                 Task { @MainActor in self?.accept(connection) }
             }
-            listener.stateUpdateHandler = { [weak self] update in
+            listener.stateUpdateHandler = { [weak self, weak listener] update in
                 Task { @MainActor in
+                    // Ignore a listener this one has already replaced.
+                    guard let self, let listener, self.listener === listener else { return }
                     switch update {
                     case .failed(let error), .waiting(let error):
-                        self?.listenerFailed(error)
+                        self.listenerFailed(error)
                     default:
                         break
                     }
@@ -119,12 +131,19 @@ final class VaultReceiver: ObservableObject {
         state = .failed(message)
     }
 
-    /// kDNSServiceErr_NoAuth (-65555): Bonjour refused because Local Network
-    /// access is off — the one failure the user can fix, so it gets its own state.
+    /// kDNSServiceErr_NoAuth (-65555): iOS refused the Bonjour announcement.
+    /// Either Local Network access is off, or the app runs inside another one
+    /// (LiveContainer) whose Info.plist doesn't list our service type — which
+    /// no setting can fix. So keep listening without announcing (same code);
+    /// the PC connects by address. Only if that fails too is it the permission.
     private func listenerFailed(_ error: NWError) {
         if case .dns(let code) = error, code == -65555 {
-            stop()
-            state = .needsLocalNetwork
+            if announced {
+                listen(announce: false)
+            } else {
+                stop()
+                state = .needsLocalNetwork
+            }
         } else {
             fail("Couldn't listen on the network: \(error.localizedDescription)")
         }

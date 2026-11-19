@@ -48,7 +48,7 @@ struct ReceiveView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(Theme.accent)
             Text("Allow Local Network access").font(.title3.bold())
-            Text("Secure Vault needs it so your PC can find this iPhone. If iOS just asked, tap **Allow** and the app tries again by itself. Otherwise turn on **Local Network** for Secure Vault in Settings, then come back.")
+            Text("Secure Vault needs it so your PC can find this iPhone. If iOS just asked, tap **Allow** and the app tries again by itself. Otherwise turn on **Local Network** for Secure Vault in Settings — or for LiveContainer, if the app runs inside it — then come back.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.secondaryText)
             Button("Open Settings") {
@@ -77,10 +77,21 @@ struct ReceiveView: View {
                 .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityLabel("Code \(receiver.code.map(String.init).joined(separator: " "))")
             if let address = receiver.address {
-                LabeledContent("This iPhone's address", value: address)
-                    .font(.subheadline)
-                    .padding(12)
-                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 10))
+                VStack(spacing: 8) {
+                    LabeledContent("This iPhone's address", value: address)
+                        .font(receiver.announced ? .subheadline : .headline)
+                    if !receiver.announced {
+                        // Typical inside LiveContainer: iOS won't let the app announce itself.
+                        Text("The PC can't find this iPhone by itself here. In **Send to iPhone** on the PC, type this address instead of picking from the list.")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.accent)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(12)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10)
+                    .stroke(receiver.announced ? Color.clear : Theme.accent))
             } else {
                 Text("Connect to the same Wi-Fi network as the PC.")
                     .font(.subheadline).foregroundStyle(Theme.negative)
@@ -89,7 +100,7 @@ struct ReceiveView: View {
                 ProgressView()
                 Text("Waiting for the PC…").foregroundStyle(Theme.secondaryText)
             }
-            Text("Keep this screen open. If the PC can't find the iPhone, check that Secure Vault is allowed under Settings › Privacy & Security › Local Network.")
+            Text("Keep this screen open. If sending fails, check under Settings › Privacy & Security › Local Network that the app is allowed — inside LiveContainer the switch is LiveContainer's.")
                 .font(.footnote)
                 .foregroundStyle(Theme.muted)
                 .multilineTextAlignment(.center)
