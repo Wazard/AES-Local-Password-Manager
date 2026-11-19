@@ -35,12 +35,7 @@ class EntryMixin:
         ui.field_label(form, self.t("forms.account")).pack(anchor="w")
         acc_entry = ui.text_field(form, placeholder=self.t("forms.account_ph"),
                                   value=edit_service or "")
-        acc_entry.pack(fill="x", pady=(4, 0))
-        if edit_service:
-            # The account name is the vault key, so it can't be edited; make
-            # that visible rather than leaving a field that silently ignores you.
-            acc_entry.configure(state="disabled", fg_color=T.BG,
-                                text_color=T.TEXT_MUTED)
+        acc_entry.pack(fill="x", pady=(4, 0))  # editable: the name can be corrected
 
         acc_status = ui.StatusLine(form)
         acc_status.pack(anchor="w", pady=(4, 0))
@@ -81,17 +76,26 @@ class EntryMixin:
         url_entry.pack(fill="x", pady=(4, 0))
 
         def save_action():
-            service = edit_service or acc_entry.get().strip()
+            service = acc_entry.get().strip()
             if not service:
                 acc_status.show(self.t("forms.required"), "negative")
                 acc_entry.configure(border_color=T.NEGATIVE)
                 acc_entry.focus_set()
                 return
-            if not edit_service and service in self.vault_data:
+            if service != edit_service and service in self.vault_data:
                 acc_status.show(self.t("forms.duplicate"), "negative")
                 acc_entry.configure(border_color=T.NEGATIVE)
                 acc_entry.focus_set()
                 return
+            if edit_service and service != edit_service:
+                # Renaming: keep the entry where it is in the vault instead of
+                # dropping the old key and appending a new one.
+                if not data_handler.rename_entry(self.vault_data, edit_service, service):
+                    ui.alert(self, self.t("forms.rename_failed_title"),
+                             self.t("forms.rename_failed", service=service),
+                             kind="negative")
+                    return
+                self.active_service = service
             existing = self.vault_data.get(service, {})
             self.vault_data[service] = {
                 "user": user_entry.get(),

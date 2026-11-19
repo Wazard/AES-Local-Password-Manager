@@ -1,10 +1,11 @@
 """Accounts dashboard: search, sort, favourites and a grid/list toggle."""
 import customtkinter as ctk
 
-from core import data_handler
 from UI import components as ui
 from UI import icons
 from UI import theme as T
+
+SEARCH_DEBOUNCE_MS = 120  # settle time after the last keystroke before redrawing
 
 
 class DashboardMixin:
@@ -13,6 +14,8 @@ class DashboardMixin:
         self.logged_in = True
         self.start_security_timers()
         self.clear_screen()
+        self._search_after = None
+        self._rendered = None  # nothing drawn yet: the first render can't be skipped
 
         ui.app_bar(self, left_builder=self._view_toggles, show_nav=True)
 
@@ -75,8 +78,18 @@ class DashboardMixin:
         self._view_grid_btn.pack(side="left")
 
     def _on_search(self, _event=None):
+        """Redraw shortly after the last keystroke rather than on each one:
+        rebuilding the cards is the slow part, and mid-word results are thrown
+        away as fast as they are drawn."""
         self.search_query = self.search_entry.get()
-        self._render_accounts()
+        if self._search_after is not None:
+            self.after_cancel(self._search_after)
+        self._search_after = self.after(SEARCH_DEBOUNCE_MS, self._apply_search)
+
+    def _apply_search(self):
+        self._search_after = None
+        if self.current_view == "dashboard":  # the screen may have changed since
+            self._render_accounts()
 
     def _on_sort_change(self, label):
         self.sort_mode = self.sort_label_to_mode.get(label, "name_asc")
@@ -136,8 +149,9 @@ class DashboardMixin:
 
     def _render_accounts(self):
         """(Re)draws the filtered + sorted accounts in the current view mode."""
-        for widget in self.dash_scroll.winfo_children():
-            widget.destroy()
+        services = (self.search_cache.services(
+            self.vault_data, self.vault_revision, self.search_query, self.sort_mode)
+            if self.vault_data else [])
 
         total = len(self.vault_data)
         if self.count_label.winfo_exists():
@@ -146,12 +160,20 @@ class DashboardMixin:
                 (self.t("dashboard.count_one") if total == 1
                  else self.t("dashboard.count", n=total)))
 
+        # Typing "gith", "githu", "github" usually lands on the same accounts;
+        # redrawing every card each time is the expensive part, so don't.
+        state = (self.vault_revision, self.view_mode, tuple(services))
+        if state == self._rendered:
+            return
+        self._rendered = state
+
+        for widget in self.dash_scroll.winfo_children():
+            widget.destroy()
+
         if not self.vault_data:
             self._empty_state(self.t("dashboard.no_accounts"))
             return
 
-        services = data_handler.visible_services(
-            self.vault_data, self.search_query, self.sort_mode)
         if not services:
             self._empty_state(self.t("dashboard.no_results"))
             return

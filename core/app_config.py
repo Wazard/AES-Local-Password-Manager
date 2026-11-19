@@ -1,7 +1,8 @@
 """Small non-secret app config (browser-extension pairing token, port, toggle).
 
-Stored as plain JSON next to the executable — it holds no vault data, only the
-extension pairing token and preferences. Lives beside `vault.pwmanager`.
+Stored as plain JSON in the per-user data dir — it holds no vault data, only the
+extension pairing token and preferences. The vault itself may live elsewhere
+(see `core.vault_location`).
 """
 import os
 import json

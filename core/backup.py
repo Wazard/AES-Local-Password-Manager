@@ -1,34 +1,53 @@
-"""Helpers to back up the encrypted vault to a folder via a symbolic link.
+"""Dated backup copies of the encrypted vault.
 
-Strategy: move the real `vault.pwmanager` into a chosen folder (OneDrive or any
-user-selected directory) and leave a symlink in its place. The app keeps reading
-and writing the same path, while the folder holds an always-current encrypted
-backup (and syncs it, in OneDrive's case).
+Every save drops a copy into the backup folder — the OneDrive `SecureVault`
+folder when OneDrive is set up, so copies sync off this machine, otherwise the
+per-user data dir. Copies are named
 
-create_link / remove_link return (ok, message, reason). reason == "permission"
-means the symlink operation needs administrator rights — the caller can then
-re-run the operation elevated.
+    vault_bk_<year>_<month>_<day>_<time>_<index>.pwmanager
+
+with fixed-width, zero-padded fields, so sorting by name is sorting by date.
+They are made read-only, which is what makes Windows ask twice before one is
+deleted by accident.
+
+A copy is an ordinary vault file: the master password that opened the vault
+opens the copy, and restoring one is a file copy. Nothing here can read vault
+contents — backups stay encrypted throughout.
 """
 import os
+import re
 import shutil
+import stat
+import time
 
 SUBFOLDER = "SecureVault"
+BACKUPS_DIR_NAME = "backups"
+
+# Retention: every one of the most recent KEEP_RECENT saves, plus the last
+# backup of each day going back KEEP_DAYS — so a busy afternoon can't push a
+# month of history out.
+KEEP_RECENT = 20
+KEEP_DAYS = 60
+
+PREFIX = "vault_bk_"
+STAMP_FORMAT = "%Y_%m_%d_%H%M"
+NAME_RE = re.compile(r"^vault_bk_(\d{4}_\d{2}_\d{2}_\d{4})_\d{2}\.pwmanager$")
 
 
-def can_symlink():
-    """Non-destructive check of whether this process may create symlinks
-    (true with admin rights or Windows Developer Mode)."""
-    import tempfile
-    d = tempfile.mkdtemp()
-    link, tgt = os.path.join(d, "l"), os.path.join(d, "t")
-    open(tgt, "w").close()
+def _when(name):
+    """When a backup was taken, read from its name.
+
+    Not from the file's timestamp: copying a file carries the original's
+    modification time along with it, so every backup of one vault would claim
+    the same moment. The name is the record — that is what it is for.
+    """
+    match = NAME_RE.match(name)
+    if not match:
+        return None
     try:
-        os.symlink(tgt, link)
-        return True
-    except OSError:
-        return False
-    finally:
-        shutil.rmtree(d, ignore_errors=True)
+        return time.mktime(time.strptime(match.group(1), STAMP_FORMAT))
+    except ValueError:
+        return None
 
 
 def get_onedrive_dir():
@@ -40,112 +59,156 @@ def get_onedrive_dir():
     return None
 
 
-def status(vault_file):
-    is_link = os.path.islink(vault_file)
-    return {
-        "onedrive": get_onedrive_dir(),
-        "is_link": is_link,
-        "target": os.path.realpath(vault_file) if is_link else None,
-        "vault_exists": os.path.exists(vault_file),
-    }
+def default_dir():
+    """Backups land in OneDrive when there is one — a copy that survives this
+    machine is the point — and in the app's own data dir otherwise."""
+    from core import paths
+    onedrive = get_onedrive_dir()
+    if onedrive:
+        return os.path.join(onedrive, SUBFOLDER, BACKUPS_DIR_NAME)
+    return os.path.join(paths.data_dir(), BACKUPS_DIR_NAME)
 
 
-def create_link(vault_file, base_dir):
-    """Moves the vault into base_dir/SecureVault and symlinks it back."""
-    if os.path.islink(vault_file):
-        return True, "Already linked — your vault is backed up.", "already"
+def backup_dir():
+    """The folder backups go to: the user's choice, else the default."""
+    from core import vault_location
+    return vault_location.backup_dir() or default_dir()
 
-    backup_dir = os.path.join(base_dir, SUBFOLDER)
-    target = os.path.join(backup_dir, os.path.basename(vault_file))
 
+def set_backup_dir(path):
+    from core import vault_location
+    vault_location.set_backup_dir(path)
+
+
+def _protect(path):
+    """Make a backup read-only, so deleting it takes a deliberate confirmation
+    rather than a stray Del keypress."""
     try:
-        os.makedirs(backup_dir, exist_ok=True)
-    except OSError as e:
-        return False, "Cannot write to that folder: %s" % e, "error"
-
-    moved = False
-    if os.path.exists(vault_file) and not os.path.islink(vault_file):
-        if os.path.exists(target):
-            return False, "A backup already exists there. Remove one copy first.", "conflict"
-        try:
-            shutil.move(vault_file, target)
-            moved = True
-        except OSError as e:
-            return False, "Could not move the vault: %s" % e, "error"
-
-    try:
-        os.symlink(target, vault_file)
+        os.chmod(path, stat.S_IREAD)
     except OSError:
-        if moved and not os.path.exists(vault_file):
-            shutil.move(target, vault_file)  # roll back
-        return False, "Creating the backup link needs administrator rights.", "permission"
-
-    return True, "Backup link created. Your vault now syncs to this folder.", "ok"
+        pass
 
 
-def import_vault(vault_file, source, mode):
-    """Adopt an existing vault file. mode 'move' relocates it here; mode 'link'
-    leaves it in place and points a symlink at it (so cloud backups keep working).
-    Returns (ok, message, reason)."""
-    if os.path.lexists(vault_file):
-        return False, "A vault already exists here.", "exists"
+def _unprotect(path):
+    try:
+        os.chmod(path, stat.S_IWRITE | stat.S_IREAD)
+    except OSError:
+        pass
+
+
+def _next_name(folder, when=None):
+    """A name that sorts chronologically, with an index to separate copies made
+    within the same minute."""
+    stamp = time.strftime(STAMP_FORMAT, time.localtime(when))
+    for index in range(1, 100):
+        name = "%s%s_%02d.pwmanager" % (PREFIX, stamp, index)
+        if not os.path.exists(os.path.join(folder, name)):
+            return name
+    return "%s%s_99.pwmanager" % (PREFIX, stamp)
+
+
+def make_backup(vault_file, folder=None):
+    """Copy the current vault into the backup folder. Returns the new path, or
+    None if there was nothing to copy or the folder can't be written to —
+    a failed backup must never stop the vault itself from being saved."""
+    source = os.path.realpath(vault_file)
     if not os.path.isfile(source):
-        return False, "That file was not found.", "error"
-    if mode == "move":
-        try:
-            shutil.move(source, vault_file)
-            return True, "Vault imported.", "ok"
-        except OSError as e:
-            return False, "Could not move the file: %s" % e, "error"
+        return None
+    folder = folder or backup_dir()
     try:
-        os.symlink(source, vault_file)
-        return True, "Vault linked.", "ok"
+        os.makedirs(folder, exist_ok=True)
+        target = os.path.join(folder, _next_name(folder))
+        shutil.copy(source, target)  # not copy2: a backup's own time is its own
     except OSError:
-        return False, "Linking needs administrator rights.", "permission"
+        return None
+    _protect(target)
+    prune(folder)
+    return target
 
 
-def prepare_link(vault_file, base_dir):
-    """Create the backup folder and move the vault into it (unprivileged part of
-    linking). Returns (ok, target_path_or_message)."""
-    if os.path.islink(vault_file):
-        return False, "Already linked."
-    backup_dir = os.path.join(base_dir, SUBFOLDER)
-    target = os.path.join(backup_dir, os.path.basename(vault_file))
+def list_backups(folder=None):
+    """Every backup in the folder, newest first."""
+    folder = folder or backup_dir()
     try:
-        os.makedirs(backup_dir, exist_ok=True)
-    except OSError as e:
-        return False, "Cannot write to that folder: %s" % e
-    if os.path.exists(vault_file) and not os.path.islink(vault_file):
-        if os.path.exists(target):
-            return False, "A backup already exists there. Remove one copy first."
+        names = os.listdir(folder)
+    except OSError:
+        return []
+    found = []
+    for name in sorted(names, reverse=True):  # the names sort chronologically
+        when = _when(name)
+        if when is None:
+            continue
+        path = os.path.join(folder, name)
         try:
-            shutil.move(vault_file, target)
-        except OSError as e:
-            return False, "Could not move the vault: %s" % e
-    return True, target
-
-
-def rollback_link(vault_file, target):
-    """Undo prepare_link if the symlink was never created (move the vault back)."""
-    if not os.path.lexists(vault_file) and os.path.exists(target):
-        try:
-            shutil.move(target, vault_file)
+            found.append({"path": path, "name": name, "when": when,
+                          "size": os.path.getsize(path)})
         except OSError:
             pass
+    return found
 
 
-def remove_link(vault_file):
-    """Replaces the symlink with a real local copy of the vault."""
-    if not os.path.islink(vault_file):
-        return False, "No backup link is set up.", "none"
-    target = os.path.realpath(vault_file)
+def prune(folder=None, keep_recent=KEEP_RECENT, keep_days=KEEP_DAYS):
+    """Drop old backups: keep the newest `keep_recent`, plus the last backup of
+    each day within `keep_days`. Only files matching the backup naming scheme
+    are ever removed — anything else in the folder is left alone."""
+    backups = list_backups(folder)
+    keep = {b["path"] for b in backups[:keep_recent]}
+    cutoff = time.time() - keep_days * 86400
+    seen_days = set()
+    for b in backups:
+        if b["when"] < cutoff:
+            continue
+        day = time.strftime("%Y%m%d", time.localtime(b["when"]))
+        if day not in seen_days:
+            seen_days.add(day)
+            keep.add(b["path"])
+    removed = 0
+    for b in backups:
+        if b["path"] not in keep and delete_backup(b["path"]):
+            removed += 1
+    return removed
+
+
+def delete_backup(path):
+    """Remove one backup (read-only has to be cleared first, by design)."""
+    if not NAME_RE.match(os.path.basename(path)):
+        return False
+    _unprotect(path)
     try:
-        os.unlink(vault_file)
+        os.remove(path)
+        return True
     except OSError:
-        return False, "Removing the backup link needs administrator rights.", "permission"
-    if os.path.exists(target):
+        return False
+
+
+def restore(backup_path, vault_file):
+    """Put a backup back in place as the live vault.
+
+    The vault as it stands is copied into the backup folder first, so restoring
+    the wrong one is itself undoable. Returns (ok, message).
+    """
+    from core import storage_handler
+
+    if not os.path.isfile(backup_path):
+        return False, "That backup is no longer there."
+    if not storage_handler.looks_like_vault(backup_path):
+        return False, "That file does not look like a vault."
+
+    target = os.path.realpath(vault_file)
+    tmp = target + ".restore"
+    try:
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        # Take the copy first: backing up the current vault prunes old ones, and
+        # the backup being restored could be among them.
+        shutil.copy(backup_path, tmp)
+        # Backups are read-only; a live vault must not be, or the next save fails.
+        _unprotect(tmp)
+        make_backup(vault_file)  # safety net: the vault as it stands right now
+        os.replace(tmp, target)  # atomic: the vault is never half-written
+    except OSError as e:
         try:
-            shutil.copy2(target, vault_file)
-        except OSError as e:
-            return False, "Link removed, but the local copy could not be restored: %s" % e, "error"
-    return True, "Backup link removed. The backup copy was kept.", "ok"
+            os.remove(tmp)
+        except OSError:
+            pass
+        return False, "Could not restore the backup: %s" % e
+    return True, "Backup restored."

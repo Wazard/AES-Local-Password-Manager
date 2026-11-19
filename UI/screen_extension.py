@@ -2,6 +2,7 @@
 import webbrowser
 import customtkinter as ctk
 
+from core import version
 from UI import components as ui
 from UI import icons
 from UI import theme as T
@@ -66,7 +67,7 @@ class ExtensionMixin:
 
         # --- Security --------------------------------------------------------
         guard = ui.card(body)
-        guard.pack(fill="x", pady=(T.GAP_L, T.GAP_L), padx=8)
+        guard.pack(fill="x", pady=(T.GAP_L, T.GAP), padx=8)
         ui.heading(guard, self.t("extension.section_security")).pack(
             anchor="w", padx=T.PAD_CARD, pady=(T.PAD_CARD, 0))
         ctk.CTkCheckBox(guard, text=self.t("extension.tamper"),
@@ -75,3 +76,12 @@ class ExtensionMixin:
                         ).pack(anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
         ui.hint(guard, self.t("extension.tamper_hint"), wraplength=420).pack(
             anchor="w", padx=T.PAD_CARD, pady=(6, T.PAD_CARD))
+
+        # Which version is installed — the answer to "did the update take?"
+        about = ui.card(body)
+        about.pack(fill="x", pady=(0, T.GAP_L), padx=8)
+        ui.field_label(about, self.t("extension.version")).pack(
+            anchor="w", padx=T.PAD_CARD, pady=(T.PAD_CARD, 0))
+        ctk.CTkLabel(about, text="Secure Vault " + version.VERSION,
+                     font=T.mono(), text_color=T.TEXT).pack(
+                         anchor="w", padx=T.PAD_CARD, pady=(2, T.PAD_CARD))

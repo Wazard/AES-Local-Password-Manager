@@ -19,7 +19,7 @@ from core import password_strength
 from core import protocol_handler
 from core import tamper
 from core import backup
-from core import elevation
+from core import vault_location
 from core.autofill_server import AutofillServer
 from core.single_instance import ControlServer
 from core.session_crypto import SessionCrypto
@@ -109,6 +109,13 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.vault_params = None
         self.vault_data = {}
         self.session = SessionCrypto()
+        # Bumped on every edit; the search cache and the dashboard use it to
+        # tell "same accounts, redraw pointless" from "this is stale".
+        self.vault_revision = 0
+        self.search_cache = data_handler.SearchCache()
+        # True only while the user is deliberately setting up a new vault, so a
+        # missing (moved) vault can never be replaced by an empty one.
+        self.creating_vault = False
 
         # Auto-lock on inactivity + tamper tripwire
         self._idle_after = None
@@ -377,51 +384,48 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self._stop_autofill()
         super().destroy()
 
-    # --- First-run: adopt an existing vault file ---
-    def import_existing_vault(self):
+    # --- Pointing the app at a vault file ---
+    def locate_vault(self):
+        """Adopt a vault file wherever the user keeps it. The file stays put —
+        only its location is recorded — so moving the vault is a matter of
+        pointing the app at it again, not of starting over."""
         from tkinter import filedialog
         src = filedialog.askopenfilename(
-            title=self.t("import.title"),
+            title=self.t("vault.locate_title"),
             filetypes=[("Secure Vault", "*.pwmanager"), ("All files", "*.*")])
         if not src:
             return
-        src = os.path.abspath(src)
-        vault = os.path.abspath(storage_handler.VAULT_FILE)
-        if src == vault:
+        if not storage_handler.looks_like_vault(src):
+            ui.alert(self, self.t("vault.locate_title"), self.t("vault.not_a_vault"))
             return
-        ui.modal(self, self.t("import.title"), self.t("import.prompt_modal"), [
-            (self.t("modal.link"), "primary", lambda: self._import_choice(vault, src, True)),
-            (self.t("modal.move"), "secondary", lambda: self._import_choice(vault, src, False)),
-            (self.t("modal.cancel"), "secondary", None),
-        ])
+        self.use_vault_at(src)
 
-    def _import_choice(self, vault, src, link):
-        if not link:
-            ok, msg, _ = backup.import_vault(vault, src, "move")
-            self._after_import(ok, msg)
+    def use_vault_at(self, path):
+        vault_location.remember(path)
+        self.creating_vault = False
+        self.show_auth_screen()  # vault now present → normal login
+
+    def start_new_vault(self):
+        """Deliberately start an empty vault. When a vault was in use before,
+        say plainly that this app will stop using it."""
+        if storage_handler.vault_state() == storage_handler.MOVED:
+            # The in-app modal is not blocking, so the rest continues in the
+            # callback rather than on a returned yes/no.
+            ui.confirm(self, self.t("vault.create_title"),
+                       self.t("vault.create_confirm"), self._begin_new_vault,
+                       danger=False)
             return
-        if backup.can_symlink() or elevation.is_admin():
-            ok, msg, _ = backup.import_vault(vault, src, "link")
-            self._after_import(ok, msg)
-        elif elevation.run_elevated_cmd('mklink "%s" "%s"' % (vault, src)):
-            self._poll_import_link()
-        else:
-            self._after_import(False, self.t("backup.denied"))
+        self._begin_new_vault()
 
-    def _poll_import_link(self, tries=0):
-        if os.path.islink(os.path.abspath(storage_handler.VAULT_FILE)):
-            self.show_auth_screen()
-            return
-        if tries < 20:
-            self.after(500, lambda: self._poll_import_link(tries + 1))
-        else:
-            self.show_auth_screen()
+    def _begin_new_vault(self):
+        if storage_handler.vault_state() == storage_handler.MOVED:
+            vault_location.remember(vault_location.default_path())
+        self.creating_vault = True
+        self.show_auth_screen()
 
-    def _after_import(self, ok, msg):
-        if ok:
-            self.show_auth_screen()  # vault now present → normal login
-        else:
-            ui.alert(self, self.t("import.title"), msg)
+    def cancel_new_vault(self):
+        self.creating_vault = False
+        self.show_auth_screen()
 
     def logout(self, reason=None):
         """Clear the decrypted session (key + vault) and return to login."""
@@ -444,6 +448,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.view_mode = "list"
         self.logged_in = False
         self._idle_warning = None
+        self.creating_vault = False
         self.show_auth_screen()
 
     # --- Shared helpers ---
@@ -500,6 +505,12 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             entry = dict(entry)
             entry["pass"] = self.session.encrypt(entry.get("pass", ""))
             self.vault_data[service] = entry
+        self.vault_changed()
+
+    def vault_changed(self):
+        """Announce that `vault_data` was edited. The revision is what the
+        search cache and the dashboard watch to know their results went stale."""
+        self.vault_revision += 1
 
     def get_password(self, service):
         """Decrypts a single password on demand (only when actually needed)."""
@@ -512,6 +523,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
     def _persist_vault(self):
         """Writes the vault to disk. Builds a transient plaintext copy, encrypts
         it with the master password, and discards the plaintext. No UI."""
+        self.vault_changed()  # every write follows an edit — here so no caller forgets
         plain = None
         try:
             plain = {}
@@ -525,15 +537,33 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             encrypted = encryption.encrypt_with_key(
                 compressed, self.vault_key, self.vault_salt, self.vault_params)
             storage_handler.write_vault(encrypted)
-            return True
         except Exception:
             return False
         finally:
             plain = None
+        # A dated copy of every saved state. Never let a backup problem (full
+        # disk, OneDrive offline) turn a successful save into a failed one.
+        try:
+            backup.make_backup(storage_handler.vault_path())
+        except Exception:
+            pass
+        return True
 
     def save_vault(self):
+        """Persist the vault after an edit."""
         ok = self._persist_vault()
         if not ok:
             ui.alert(self, self.t("modal.save_failed_title"),
                      self.t("modal.save_failed_msg"), kind="negative")
         return ok
+
+    def restore_backup(self, backup_path):
+        """Swap a backup in as the live vault, then send the user back to the
+        login screen: the restored copy may well have a different master
+        password, and everything decrypted in this session is now stale."""
+        ok, msg = backup.restore(backup_path, storage_handler.vault_path())
+        if not ok:
+            ui.alert(self, self.t("backup.title"), msg, kind="negative")
+            return False
+        self.logout()
+        return True

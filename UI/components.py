@@ -42,9 +42,9 @@ def ghost_button(parent, text, command=None, **kw):
     kw.setdefault("height", 28)
     kw.setdefault("font", T.font(T.S_BODY))
     kw.setdefault("anchor", "center")
+    kw.setdefault("text_color", T.TEXT_SECONDARY)
     return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent",
-                         hover_color=T.CARD_HOVER, text_color=T.TEXT_SECONDARY,
-                         corner_radius=T.R_BTN, **kw)
+                         hover_color=T.CARD_HOVER, corner_radius=T.R_BTN, **kw)
 
 
 def icon_button(parent, icon_name, command=None, size=34, icon_px=18,
