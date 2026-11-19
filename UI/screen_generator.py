@@ -31,10 +31,28 @@ def _score_for_bits(bits):
 class GeneratorMixin:
     def show_gen_pass_screen(self):
         self.current_view = "generator"
-        self.clear_screen()
         ui.app_bar(self, back=self.show_dashboard if self.logged_in else self.show_auth_screen,
                    show_nav=self.logged_in)
+        # Kept between visits, so the length and character choices stick; a
+        # fresh password is drawn on every visit.
+        self.open_screen("generator", self._build_generator,
+                         refresh=self.regenerate_password, leave=self._leave_generator)
 
+    def _leave_generator(self):
+        """Stop the animation and don't leave the password sitting in the
+        hidden screen."""
+        self._gen_token += 1
+        if self._gen_after is not None:
+            try:
+                self.after_cancel(self._gen_after)
+            except Exception:
+                pass
+            self._gen_after = None
+        self.gen_display.configure(state="normal")
+        self.gen_display.delete(0, "end")
+        self.gen_display.configure(state="readonly")
+
+    def _build_generator(self):
         body = ui.page(self)
         ui.title(body, self.t("generator.title")).pack(pady=(0, T.GAP_L))
 
@@ -102,8 +120,6 @@ class GeneratorMixin:
         ui.copy_button(self, actions, lambda: self.gen_display.get(),
                        style="primary", height=42, width=150).pack(
                            side="left", expand=True, fill="x", padx=(T.GAP_S, 0))
-
-        self.regenerate_password()
 
     def _schedule_regenerate(self, delay=180):
         """Debounced regeneration, so dragging the slider isn't a flood."""

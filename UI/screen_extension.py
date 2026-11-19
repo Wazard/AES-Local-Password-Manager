@@ -13,9 +13,19 @@ ADDON_URL = "https://addons.mozilla.org/en-US/firefox/addon/securevault/"
 class ExtensionMixin:
     def show_extension_screen(self):
         self.current_view = "extension"
-        self.clear_screen()
         ui.app_bar(self, back=self.show_dashboard, show_nav=True)
+        # The toggles call this again to show their effect; on the kept screen
+        # that is only a refresh of the bits that change.
+        self.open_screen("extension", self._build_extension,
+                         refresh=self._refresh_extension)
 
+    def _refresh_extension(self):
+        running = self.autofill_server is not None and self.autofill_server.running
+        self._ext_status.set(self.t("extension.running") if running
+                             else self.t("extension.stopped"), running)
+        ui.set_text(self._ext_token, self.get_extension_token())
+
+    def _build_extension(self):
         body = ui.page(self, scroll=True)
         ui.title(body, self.t("extension.title")).pack(anchor="w", padx=8)
 
@@ -31,9 +41,8 @@ class ExtensionMixin:
         head = ctk.CTkFrame(bridge, fg_color="transparent")
         head.pack(fill="x", padx=T.PAD_CARD, pady=(T.PAD_CARD, 0))
         ui.heading(head, self.t("extension.section_bridge")).pack(side="left")
-        running = self.autofill_server is not None and self.autofill_server.running
-        ui.status_dot(head, self.t("extension.running") if running
-                      else self.t("extension.stopped"), running).pack(side="right")
+        self._ext_status = ui.status_dot(head, "", False)
+        self._ext_status.pack(side="right")
 
         ctk.CTkCheckBox(bridge, text=self.t("extension.enable"),
                         variable=self.ext_enabled, command=self.toggle_extension,
@@ -57,10 +66,10 @@ class ExtensionMixin:
         ui.field_label(pair, self.t("extension.token")).pack(anchor="w", pady=(T.GAP, 0))
         token_row = ctk.CTkFrame(pair, fg_color="transparent")
         token_row.pack(fill="x", pady=(4, 0))
-        token = self.get_extension_token()
-        ui.text_field(token_row, value=token, readonly=True, mono=True).pack(
-            side="left", fill="x", expand=True)
-        ui.copy_button(self, token_row, lambda: token).pack(side="left", padx=(T.GAP_S, 0))
+        self._ext_token = ui.text_field(token_row, readonly=True, mono=True)
+        self._ext_token.pack(side="left", fill="x", expand=True)
+        ui.copy_button(self, token_row, self.get_extension_token).pack(
+            side="left", padx=(T.GAP_S, 0))
 
         ui.ghost_button(pair, self.t("extension.regenerate"), self.regenerate_token,
                         width=150, anchor="w").pack(anchor="w", pady=(T.GAP_S, 0))

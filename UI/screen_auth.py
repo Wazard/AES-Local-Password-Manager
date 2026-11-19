@@ -33,10 +33,15 @@ class AuthMixin:
             self.show_no_vault_screen(state)
             return
 
-        self.clear_screen()
         ui.app_bar(self)
-        creating = self.creating_vault
+        # Login and vault creation are laid out differently, so each is a kept
+        # screen of its own. The master password is wiped on the way out.
+        name = "create" if self.creating_vault else "login"
+        self.open_screen(name, lambda: self._build_auth(name == "create"),
+                         refresh=lambda: self._refresh_auth(name),
+                         leave=lambda: self._wipe_auth(name))
 
+    def _build_auth(self, creating):
         body = ctk.CTkFrame(self.screen, fg_color="transparent")
         body.pack(fill="both", expand=True)
         self._version_label()
@@ -53,32 +58,30 @@ class AuthMixin:
             wraplength=FIELD_W, justify="center").pack(pady=(6, T.GAP_L + 4))
 
         ui.field_label(block, self.t("auth.master_label"), width=FIELD_W).pack(anchor="w")
-        row, self.pass_entry = ui.secret_field(
+        row, pass_entry = ui.secret_field(
             block, placeholder=self.t("auth.placeholder"), mono=False)
-        self.pass_entry.configure(width=FIELD_W - T.H_INPUT - T.GAP_S)
+        pass_entry.configure(width=FIELD_W - T.H_INPUT - T.GAP_S)
         row.pack(pady=(4, 0))
-        self.pass_entry.bind("<Return>", lambda _e: self.attempt_login())
-        self.pass_entry.focus_set()
+        pass_entry.bind("<Return>", lambda _e: self.attempt_login())
 
         # Vault creation is the one place a strength meter belongs on this screen.
-        self.auth_meter = None
+        meter = None
         if creating:
-            self.auth_meter = ui.StrengthMeter(block, width=FIELD_W)
-            self.auth_meter.pack(fill="x", pady=(8, 0))
-            self.auth_meter.reset(self.t("auth.requirement"))
-            self.pass_entry.bind("<KeyRelease>", self._on_master_typed, add="+")
+            meter = ui.StrengthMeter(block, width=FIELD_W)
+            meter.pack(fill="x", pady=(8, 0))
+            pass_entry.bind("<KeyRelease>", self._on_master_typed, add="+")
 
-        self.status_label = ui.StatusLine(block, wraplength=FIELD_W, justify="center")
-        self.status_label.pack(pady=(8, 0))
-        if self.lock_reason == "idle":
-            self.status_label.show(self.t("auth.locked_idle"), "warning")
-        elif self.lock_reason == "tamper":
-            self.status_label.show(self.t("security.tamper_title"), "negative")
-        self.lock_reason = None
+        status = ui.StatusLine(block, wraplength=FIELD_W, justify="center")
+        status.pack(pady=(8, 0))
 
         ui.primary_button(
             block, self.t("vault.create_btn") if creating else self.t("auth.login_btn"),
             self.attempt_login, width=FIELD_W, height=42).pack(pady=(T.GAP, T.GAP_S))
+
+        if not hasattr(self, "_auth"):
+            self._auth = {}
+        self._auth["create" if creating else "login"] = {
+            "pass": pass_entry, "meter": meter, "status": status}
 
         if creating:
             ui.ghost_button(block, self.t("vault.back_btn"), self.cancel_new_vault,
@@ -96,16 +99,44 @@ class AuthMixin:
         if not TRAY_AVAILABLE:
             tray_chk.configure(state="disabled")
 
+    def _refresh_auth(self, name):
+        widgets = self._auth[name]
+        # attempt_login and the strength meter work on whichever form is up.
+        self.pass_entry = widgets["pass"]
+        self.status_label = widgets["status"]
+        self.auth_meter = widgets["meter"]
+
+        self.pass_entry.conceal()
+        ui.set_text(self.pass_entry, "")
+        if self.auth_meter is not None:
+            self.auth_meter.reset(self.t("auth.requirement"))
+        if self.lock_reason == "idle":
+            self.status_label.show(self.t("auth.locked_idle"), "warning")
+        elif self.lock_reason == "tamper":
+            self.status_label.show(self.t("security.tamper_title"), "negative")
+        else:
+            self.status_label.clear()
+        self.lock_reason = None
+        self.pass_entry.focus_set()
+
+    def _wipe_auth(self, name):
+        entry = self._auth[name]["pass"]
+        entry.conceal()
+        ui.set_text(entry, "")
+
     def show_no_vault_screen(self, state):
         """No vault to log into: either it moved away or there has never been
         one. Both cases end here rather than at a login form, because a login
         form with nothing to open is what used to swallow relocated vaults."""
-        from core import vault_location
-
         self.current_view = "auth"
-        self.clear_screen()
         ui.app_bar(self)
+        moved = state == storage_handler.MOVED
+        # The two cases lead with different buttons, so each is kept apart.
+        self.open_screen("novault-moved" if moved else "novault-new",
+                         lambda: self._build_no_vault(moved),
+                         refresh=lambda: self._refresh_no_vault(moved))
 
+    def _build_no_vault(self, moved):
         body = ctk.CTkFrame(self.screen, fg_color="transparent")
         body.pack(fill="both", expand=True)
         self._version_label()
@@ -113,7 +144,6 @@ class AuthMixin:
         block = ctk.CTkFrame(body, fg_color="transparent")
         block.place(relx=0.5, rely=0.46, anchor="center")
 
-        moved = state == storage_handler.MOVED
         ui.title(block,
                  self.t("vault.missing_title") if moved else self.t("vault.new_title"),
                  font=T.font(26, "bold")).pack()
@@ -123,13 +153,14 @@ class AuthMixin:
             font=T.font(T.S_LABEL), text_color=T.TEXT_MUTED,
             wraplength=FIELD_W, justify="center").pack(pady=(6, T.GAP))
 
+        widgets = {"path": None, "found": None}
         if moved:
             path_card = ui.card(block)
             path_card.pack(fill="x", pady=(0, T.GAP))
-            ctk.CTkLabel(path_card, text=storage_handler.vault_path(),
-                         font=T.mono(T.S_SMALL), text_color=T.TEXT_SECONDARY,
-                         wraplength=FIELD_W - 2 * T.GAP, justify="left").pack(
-                             padx=T.GAP, pady=T.GAP)
+            widgets["path"] = ctk.CTkLabel(
+                path_card, text="", font=T.mono(T.S_SMALL), text_color=T.TEXT_SECONDARY,
+                wraplength=FIELD_W - 2 * T.GAP, justify="left")
+            widgets["path"].pack(padx=T.GAP, pady=T.GAP)
 
         locate = (self.t("vault.locate_btn") if moved else self.t("auth.import_btn"),
                   self.locate_vault)
@@ -144,18 +175,38 @@ class AuthMixin:
                             width=FIELD_W, height=42).pack()
 
         # A vault sitting at another place we know about (the data dir, the
-        # OneDrive backup folder) — one click instead of a file dialog.
-        suggestion = vault_location.found_elsewhere()
-        if suggestion:
-            ui.secondary_button(block, self.t("vault.use_found_btn"),
-                                lambda: self.use_vault_at(suggestion),
-                                width=FIELD_W, height=42).pack(pady=(T.GAP_S, 0))
-            ctk.CTkLabel(block, text=suggestion, font=T.mono(T.S_SMALL),
-                         text_color=T.TEXT_MUTED, wraplength=FIELD_W,
-                         justify="center").pack(pady=(4, 0))
+        # OneDrive backup folder) — one click instead of a file dialog. Shown
+        # on refresh, since what is found can change between visits.
+        widgets["found_btn"] = ui.secondary_button(
+            block, self.t("vault.use_found_btn"),
+            lambda: self.use_vault_at(widgets["found"]), width=FIELD_W, height=42)
+        widgets["found_label"] = ctk.CTkLabel(
+            block, text="", font=T.mono(T.S_SMALL), text_color=T.TEXT_MUTED,
+            wraplength=FIELD_W, justify="center")
 
-        ui.ghost_button(block, self.t("auth.generate_btn"), self.show_gen_pass_screen,
-                        width=FIELD_W).pack(pady=(T.GAP, 0))
+        widgets["generate"] = ui.ghost_button(
+            block, self.t("auth.generate_btn"), self.show_gen_pass_screen, width=FIELD_W)
+        widgets["generate"].pack(pady=(T.GAP, 0))
+
+        if not hasattr(self, "_no_vault"):
+            self._no_vault = {}
+        self._no_vault[moved] = widgets
+
+    def _refresh_no_vault(self, moved):
+        from core import vault_location
+
+        widgets = self._no_vault[moved]
+        if widgets["path"] is not None:
+            widgets["path"].configure(text=storage_handler.vault_path())
+        suggestion = vault_location.found_elsewhere()
+        widgets["found"] = suggestion
+        if suggestion:
+            widgets["found_label"].configure(text=suggestion)
+            widgets["found_btn"].pack(pady=(T.GAP_S, 0), before=widgets["generate"])
+            widgets["found_label"].pack(pady=(4, 0), before=widgets["generate"])
+        else:
+            widgets["found_btn"].pack_forget()
+            widgets["found_label"].pack_forget()
 
     def _version_label(self):
         """Shown on both pre-login screens, so "did the update actually

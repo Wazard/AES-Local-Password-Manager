@@ -39,6 +39,21 @@ from UI.screen_changepw import ChangeMasterMixin
 
 apply_theme()
 
+# Kept screens that show what is in the vault, dropped whenever it locks.
+VAULT_SCREENS = ("dashboard", "details", "form")
+
+
+class _KeptScreen:
+    """A screen built once and kept; see PasswordManagerGUI.open_screen."""
+    __slots__ = ("frame", "under", "refresh", "leave")
+
+    def __init__(self, frame, under):
+        self.frame = frame
+        self.under = under
+        self.refresh = None
+        self.leave = None
+
+
 AUTO_LOCK_MS = 5 * 60 * 1000      # re-lock after 5 minutes of inactivity
 IDLE_WARNING_MS = 30 * 1000       # heads-up shown before the auto-lock fires
 CLIPBOARD_CLEAR_MS = 25 * 1000    # wipe copied secrets from the clipboard
@@ -130,13 +145,13 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         # Kept for the whole session: the top bar, and the dashboard once built.
         self.app_bar = ui.AppBar(self)
         self.app_bar.pack(fill="x", side="top")
-        # Screens are stacked in here. The dashboard stays put underneath the
-        # others: covering a window is cheap, while un-hiding one makes Windows
-        # re-show every widget on it (about 10 ms per account card).
+        # Every screen is built once and kept (see open_screen); they are
+        # stacked in here.
         self.host = ctk.CTkFrame(self.container, fg_color="transparent")
         self.host.pack(fill="both", expand=True)
         self.screen = None
-        self._dash_screen = None
+        self._kept = {}        # screen name -> _KeptScreen
+        self._showing = None   # name of the screen on top
 
         self.show_auth_screen()
         self.after(600, self._maybe_show_tamper_notice)
@@ -459,7 +474,8 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self.logged_in = False
         self._idle_warning = None
         self.creating_vault = False
-        self._drop_dashboard()  # it shows account names: never keep it past a lock
+        # These show account names and details: never keep them past a lock.
+        self.drop_screens(VAULT_SCREENS)
         self.show_auth_screen()
 
     # --- Shared helpers ---
@@ -475,7 +491,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
             app_config.save(self.ext_config)
         except Exception:
             pass
-        self._drop_dashboard()  # its labels are in the old language
+        self.drop_screens()  # every kept screen is labelled in the old language
         view_map = {
             "auth": self.show_auth_screen,
             "dashboard": self.show_dashboard,
@@ -489,27 +505,80 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         }
         view_map[self.current_view]()
 
-    def clear_screen(self):
-        """Swap in an empty screen and return it. Screens build into it."""
+    def open_screen(self, name, build, refresh=None, leave=None, under=False):
+        """Show the screen called `name`, building it only the first time.
+
+        Building CustomTkinter widgets is what made every click slow, so each
+        screen is laid out once and kept for the session. `build()` fills
+        `self.screen` on the first visit; `refresh()` runs on every visit to
+        bring the kept widgets up to date; `leave()` runs when the user moves
+        on, and is where a screen wipes any secret it was showing.
+
+        A screen left with `under=True` stays mapped beneath the others
+        instead of being hidden. That is for the dashboard: un-hiding a window
+        makes Windows re-show every widget on it, about 10 ms per account
+        card, while uncovering one costs next to nothing.
+        """
+        kept = self._kept.get(name)
+        if kept is not None and not kept.frame.winfo_exists():
+            kept = None
+        if kept is not None and self._showing == name:
+            # Already on top (a toggle refreshing its own screen).
+            kept.refresh, kept.leave = refresh, leave
+            if refresh is not None:
+                refresh()
+            return kept.frame
+
         self._hide_screens()
-        if self._dash_screen is not None:
-            self._on_dashboard_covered()
-        self.screen = ctk.CTkFrame(self.host, fg_color="transparent")
-        self.screen.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.screen.lift()
-        return self.screen
+        if kept is None:
+            self.screen = ctk.CTkFrame(self.host, fg_color="transparent")
+            build()
+            kept = _KeptScreen(self.screen, under)
+            self._kept[name] = kept
+        kept.refresh, kept.leave = refresh, leave
+        self.screen = kept.frame
+        kept.frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+        kept.frame.lift()
+        self._showing = name
+        if refresh is not None:
+            refresh()
+        return kept.frame
 
     def _hide_screens(self):
-        """Take down whatever is showing. The app bar stays, and so does the
-        dashboard — rebuilding those on every click is what made moving around
-        the app slow. Everything else (the previous screen, a modal, the idle
-        banner) is destroyed, as it always was."""
+        """Take down whatever is showing. Kept screens are hidden (or, for
+        `under` ones, just covered); anything else on the container — a modal,
+        the idle banner — is destroyed, as it always was."""
         for widget in self.container.winfo_children():
             if widget is not self.app_bar and widget is not self.host:
                 widget.destroy()
-        for widget in self.host.winfo_children():
-            if widget is not self._dash_screen:
-                widget.destroy()
+        kept = self._kept.get(self._showing)
+        self._showing = None
+        if kept is not None and kept.frame.winfo_exists():
+            # Keep the keyboard out of a screen that is no longer on top.
+            try:
+                focused = self.focus_get()
+            except Exception:  # Tk can't name some transient focus owners
+                focused = None
+            if focused is not None and str(focused).startswith(str(kept.frame) + "."):
+                self.focus_set()
+            if kept.leave is not None:
+                kept.leave()
+            if not kept.under:
+                kept.frame.place_forget()
+
+    def drop_screens(self, names=None):
+        """Throw kept screens away (all of them, or those in `names`); each is
+        built afresh on its next visit."""
+        for name in list(self._kept) if names is None else names:
+            kept = self._kept.pop(name, None)
+            if kept is None:
+                continue
+            if self._showing == name:
+                self._showing = None
+            try:
+                kept.frame.destroy()
+            except Exception:
+                pass
 
     def copy_to_clipboard(self, text):
         self.clipboard_clear()

@@ -42,44 +42,24 @@ class DashboardMixin:
         self.start_security_timers()
         ui.app_bar(self, left_builder=self._view_toggles, show_nav=True)
 
-        if self._dash_screen is not None and self._dash_screen.winfo_exists():
-            self._hide_screens()  # uncovers the dashboard, which never went away
-            self._dash_screen.lift()
-            self.screen = self._dash_screen
-            self.search_entry.configure(takefocus="")
-            self._set_hover(None)  # the pointer left whatever card it was on
-        else:
-            self._build_dashboard()
+        # Kept mapped under the other screens: re-showing every card is the
+        # expensive part, uncovering them is not.
+        self.open_screen("dashboard", self._build_dashboard,
+                         refresh=self._refresh_dashboard,
+                         leave=self._on_dashboard_covered, under=True)
+
+    def _refresh_dashboard(self):
+        self.search_entry.configure(takefocus="")
+        self._set_hover(None)  # the pointer left whatever card it was on
         self._render_accounts()
 
     def _on_dashboard_covered(self):
         """Another screen now sits on top of the dashboard. It is still there
-        underneath, so keep the keyboard out of it: no Tab into the hidden
-        search box, and no keystrokes or wheel events landing in it."""
-        try:
-            focused = self.focus_get()
-        except Exception:  # Tk can't name some transient focus owners
-            focused = None
-        if focused is not None and str(focused).startswith(str(self._dash_screen) + "."):
-            self.focus_set()
+        underneath, so keep Tab out of its search box."""
         self.search_entry.configure(takefocus=0)
 
-    def _drop_dashboard(self):
-        """Throw the kept dashboard away (logout, language change)."""
-        screen = getattr(self, "_dash_screen", None)
-        self._dash_screen = None
-        self._cards = {}
-        self._shown = []
-        self._hover_card = None
-        if screen is not None:
-            try:
-                screen.destroy()
-            except Exception:
-                pass
-
     def _build_dashboard(self):
-        screen = self.clear_screen()
-        self._dash_screen = screen
+        screen = self.screen
         self._search_after = None
         self._rendered = None  # nothing drawn yet: the first render can't be skipped
         self._cards = {}       # (view mode, service) -> _Card
@@ -289,12 +269,9 @@ class DashboardMixin:
 
     def _show_cards(self, wanted):
         """Lay out exactly `wanted`, in order. Cards that drop out are hidden,
-        not destroyed, so clearing a search doesn't redraw them.
-
-        Only cards that are out of place get touched: re-showing a hidden card
-        is what costs (Windows re-shows each of its widgets), while moving one
-        that is already showing is cheap — so a starred account jumping to the
-        top moves that one card, not the whole list."""
+        not destroyed, so clearing a search doesn't redraw them, and only
+        cards that are out of place are touched — a starred account jumping
+        to the top moves that one card, not the whole list."""
         if self._empty is not None and wanted:
             self._empty.pack_forget()
         if wanted == self._shown:
@@ -312,19 +289,8 @@ class DashboardMixin:
                                     sticky="ew")
                     card.pos = pos
         else:
-            order = [c for c in self._shown if c in keep]  # pack order right now
-            for i, card in enumerate(wanted):
-                if i < len(order) and order[i] is card:
-                    continue
-                if card in order:
-                    order.remove(card)
-                opts = {"fill": "x", "pady": 4, "padx": 2}
-                if i < len(order):
-                    opts["before"] = order[i].frame
-                elif order:
-                    opts["after"] = order[-1].frame
-                card.frame.pack(**opts)
-                order.insert(i, card)
+            ui.repack([c.frame for c in self._shown if c in keep],
+                      [c.frame for c in wanted], fill="x", pady=4, padx=2)
         self._shown = list(wanted)
 
     def _empty_state(self, message):

@@ -276,28 +276,104 @@ def _focus_ring(entry):
                entry.configure(border_color=T.BORDER, fg_color=T.INPUT_BG), add="+")
 
 
+SECRET_STANDIN = "•" * 8  # what a not-yet-decrypted secret shows as
+
+
 def secret_field(parent, value="", placeholder="", readonly=False, mono=True,
-                 revealed=False):
-    """A masked entry with a reveal toggle. Returns (row, entry)."""
+                 revealed=False, reveal=None):
+    """A masked entry with a reveal toggle. Returns (row, entry).
+
+    Given `reveal` (a callable returning the stored secret), the field does
+    not hold the secret at all until it is needed: it shows a stand-in, and
+    `reveal()` — the decryption — runs only when the user reveals the field
+    or, if it is editable, starts editing it. A read-only field drops the
+    plaintext again as soon as it is masked.
+
+    Extra methods on the entry: `conceal()` masks it; `reset_secret(has)`
+    puts back the stand-in (or empties it when there is no stored secret);
+    `set_secret(text)` fills in a new value; `secret_loaded()` says whether
+    the field holds a real value (typed, generated or decrypted).
+    """
     row = ctk.CTkFrame(parent, fg_color="transparent")
     entry = text_field(row, placeholder=placeholder, value=value,
                        readonly=readonly, mono=mono)
     entry.configure(show="" if revealed else "•")
     entry.pack(side="left", fill="x", expand=True)
 
-    state = {"shown": revealed}
+    state = {"shown": revealed, "loaded": reveal is None}
     btn = icon_button(row, "eye.png" if not revealed else "eye-off.png",
                       size=T.H_INPUT, icon_px=17)
 
-    def toggle():
-        state["shown"] = not state["shown"]
-        entry.configure(show="" if state["shown"] else "•")
-        btn.configure(image=icons.load_tinted(
-            "eye-off.png" if state["shown"] else "eye.png", 17, T.TEXT_SECONDARY))
+    def load():
+        if not state["loaded"]:
+            set_text(entry, reveal())
+            state["loaded"] = True
 
-    btn.configure(command=toggle, fg_color=T.SECONDARY, hover_color=T.SECONDARY_HOVER)
+    def unload(has_secret=True):
+        set_text(entry, SECRET_STANDIN if has_secret else "")
+        state["loaded"] = not has_secret  # nothing stored: nothing to decrypt
+
+    def show(shown):
+        if shown and reveal is not None:
+            load()
+        state["shown"] = shown
+        entry.configure(show="" if shown else "•")
+        btn.configure(image=icons.load_tinted(
+            "eye-off.png" if shown else "eye.png", 17, T.TEXT_SECONDARY))
+        if not shown and readonly and reveal is not None:
+            unload()  # nothing to edit here, so no reason to keep it
+
+    def conceal():
+        """Mask again — a kept screen must not open on a revealed secret."""
+        if state["shown"]:
+            show(False)
+
+    def reset_secret(has_secret=True):
+        conceal()
+        if reveal is not None:
+            unload(has_secret)
+        else:
+            set_text(entry, "")
+
+    def set_secret(text):
+        set_text(entry, text)
+        state["loaded"] = True
+
+    btn.configure(command=lambda: show(not state["shown"]),
+                  fg_color=T.SECONDARY, hover_color=T.SECONDARY_HOVER)
     btn.pack(side="left", padx=(T.GAP_S, 0))
+    if reveal is not None:
+        unload()
+        if not readonly:
+            entry.bind("<FocusIn>", lambda _e: load(), add="+")
+    entry.conceal = conceal
+    entry.reset_secret = reset_secret
+    entry.set_secret = set_secret
+    entry.secret_loaded = lambda: state["loaded"]
     return row, entry
+
+
+def set_text(entry, value):
+    """Replace an entry's text, read-only ones included (a kept screen
+    refills its fields on every visit)."""
+    readonly = entry.cget("state") == "readonly"
+    if readonly:
+        entry.configure(state="normal")
+    entry.delete(0, "end")
+    if value:
+        entry.insert(0, value)
+    else:
+        # CTkEntry believes it has focus until its first FocusOut, and only
+        # brings the placeholder back when it thinks it doesn't — so an emptied
+        # field would show nothing at all. Tell it, unless it really has focus.
+        try:
+            focused = entry.focus_get()
+        except Exception:
+            focused = None
+        if focused is not getattr(entry, "_entry", None) and hasattr(entry, "_entry_focus_out"):
+            entry._entry_focus_out()
+    if readonly:
+        entry.configure(state="readonly")
 
 
 def copy_button(app, parent, get_text, style="secondary", **kw):
@@ -408,15 +484,46 @@ class StatusLine(ctk.CTkLabel):
 
 
 def status_dot(parent, text, on):
-    """'● running' / '○ stopped' style indicator."""
-    text = text.lstrip("●○ ")
+    """'● running' / '○ stopped' style indicator. `row.set(text, on)` updates it."""
     row = ctk.CTkFrame(parent, fg_color="transparent")
-    ctk.CTkLabel(row, text="●" if on else "○",
-                 font=T.font(T.S_BODY), text_color=T.POSITIVE if on else T.TEXT_MUTED,
-                 width=14).pack(side="left")
-    ctk.CTkLabel(row, text=text, font=T.font(T.S_LABEL),
-                 text_color=T.POSITIVE if on else T.TEXT_MUTED).pack(side="left", padx=(4, 0))
+    dot = ctk.CTkLabel(row, text="", font=T.font(T.S_BODY), width=14)
+    dot.pack(side="left")
+    label = ctk.CTkLabel(row, text="", font=T.font(T.S_LABEL))
+    label.pack(side="left", padx=(4, 0))
+
+    def set_state(new_text, new_on):
+        color = T.POSITIVE if new_on else T.TEXT_MUTED
+        dot.configure(text="●" if new_on else "○", text_color=color)
+        label.configure(text=new_text.lstrip("●○ "), text_color=color)
+
+    set_state(text, on)
+    row.set = set_state
     return row
+
+
+def repack(shown, wanted, **pack_opts):
+    """Make `wanted` (widgets of one parent) exactly what is packed, in that
+    order, touching only what is out of place. Re-showing a hidden widget is
+    the expensive part on Windows (it re-shows everything on it); moving one
+    that is already showing is cheap. `shown` is what the last call returned."""
+    keep = set(wanted)
+    for widget in shown:
+        if widget not in keep:
+            widget.pack_forget()
+    order = [w for w in shown if w in keep]  # the pack order right now
+    for i, widget in enumerate(wanted):
+        if i < len(order) and order[i] is widget:
+            continue
+        if widget in order:
+            order.remove(widget)
+        opts = dict(pack_opts)
+        if i < len(order):
+            opts["before"] = order[i]
+        elif order:
+            opts["after"] = order[-1]
+        widget.pack(**opts)
+        order.insert(i, widget)
+    return list(wanted)
 
 
 # --------------------------------------------------------------------------
