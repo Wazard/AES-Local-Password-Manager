@@ -55,6 +55,9 @@ final class VaultReceiver: ObservableObject {
         case waiting
         case received(ReceivedVault)
         case failed(String)
+        /// iOS hasn't allowed Local Network access (yet): on the very first
+        /// try it fails while its own permission prompt is still on screen.
+        case needsLocalNetwork
     }
 
     static let port: NWEndpoint.Port = 53917
@@ -83,8 +86,11 @@ final class VaultReceiver: ObservableObject {
             }
             listener.stateUpdateHandler = { [weak self] update in
                 Task { @MainActor in
-                    if case .failed(let error) = update {
-                        self?.fail("Couldn't listen on the network: \(error.localizedDescription)")
+                    switch update {
+                    case .failed(let error), .waiting(let error):
+                        self?.listenerFailed(error)
+                    default:
+                        break
                     }
                 }
             }
@@ -111,6 +117,17 @@ final class VaultReceiver: ObservableObject {
     private func fail(_ message: String) {
         stop()
         state = .failed(message)
+    }
+
+    /// kDNSServiceErr_NoAuth (-65555): Bonjour refused because Local Network
+    /// access is off — the one failure the user can fix, so it gets its own state.
+    private func listenerFailed(_ error: NWError) {
+        if case .dns(let code) = error, code == -65555 {
+            stop()
+            state = .needsLocalNetwork
+        } else {
+            fail("Couldn't listen on the network: \(error.localizedDescription)")
+        }
     }
 
     private func accept(_ connection: NWConnection) {

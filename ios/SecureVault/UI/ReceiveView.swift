@@ -16,6 +16,7 @@ struct ReceiveView: View {
                     case .idle, .waiting: waiting
                     case .received(let vault): received(vault)
                     case .failed(let message): failed(message)
+                    case .needsLocalNetwork: needsLocalNetwork
                     }
                 }
                 .padding(24)
@@ -34,7 +35,30 @@ struct ReceiveView: View {
         // iOS suspends the app in the background, so the listener can't outlive it.
         .onChange(of: scenePhase) { phase in
             if phase == .background { receiver.stop() }
-            if phase == .active && receiver.state == .idle { receiver.start() }
+            // Back from the permission prompt or from Settings: try again by itself.
+            if phase == .active && (receiver.state == .idle || receiver.state == .needsLocalNetwork) {
+                receiver.start()
+            }
+        }
+    }
+
+    private var needsLocalNetwork: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "wifi.exclamationmark")
+                .font(.system(size: 48))
+                .foregroundStyle(Theme.accent)
+            Text("Allow Local Network access").font(.title3.bold())
+            Text("Secure Vault needs it so your PC can find this iPhone. If iOS just asked, tap **Allow** and the app tries again by itself. Otherwise turn on **Local Network** for Secure Vault in Settings, then come back.")
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Theme.secondaryText)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            .buttonStyle(PrimaryButton())
+            Button("Try again") { receiver.start() }
+                .buttonStyle(SecondaryButton())
         }
     }
 
