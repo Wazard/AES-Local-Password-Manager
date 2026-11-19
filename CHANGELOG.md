@@ -10,6 +10,12 @@
   app over the local Wi-Fi. The iPhone shows a 6-digit code that has to be
   typed on the PC, and asks before it replaces anything.
 
+### Changed
+
+- Search looks at the website too, and every word you type can match any
+  field: case, accents and punctuation are ignored, so "luca rossi" finds
+  luca.rossi@…, and an address can be typed loosely ("luca@outlook").
+
 ## 1.2.0
 
 ### Changed

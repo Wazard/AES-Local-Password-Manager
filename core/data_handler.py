@@ -1,3 +1,7 @@
+import re
+import unicodedata
+
+
 def ordered_services(vault_data: dict, sort_mode: str = "name_asc") -> list:
     """
     Returns every service name in the requested order.
@@ -25,31 +29,72 @@ def ordered_services(vault_data: dict, sort_mode: str = "name_asc") -> list:
     return favourites + others
 
 
-def haystack(service: str, entry: dict) -> str:
-    """The text a search query is matched against: the service name and the
-    username, joined by a character no query can contain, so a match can never
-    straddle the two fields."""
-    return "%s\x00%s" % (service.lower(), str(entry.get("user", "")).lower())
+_NOT_ALNUM = re.compile(r"[\W_]+")
+
+
+def _fold(text) -> str:
+    """Lowercase with accents dropped, so "CAFÉ" and "cafe" compare equal."""
+    text = unicodedata.normalize("NFKD", str(text or "").casefold())
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def search_fields(service: str, entry: dict) -> tuple:
+    """What a search looks at: the account name, the username and the website
+    (its bare host too), folded. Computed once per vault revision."""
+    url = _fold(entry.get("url", ""))
+    fields = [_fold(service), _fold(entry.get("user", "")), url, _host(url)]
+    fields = [f for f in dict.fromkeys(fields) if f]
+    return tuple(fields), tuple(_NOT_ALNUM.sub("", f) for f in fields)
+
+
+def _term_matches(term: str, fields: tuple, squashed: tuple) -> bool:
+    if any(term in f for f in fields):
+        return True
+    # Punctuation doesn't count: "luca rossi" or "lucarossi" finds luca.rossi@…
+    # A word that is only punctuation ("-", ".") says nothing, so it matches.
+    bare = _NOT_ALNUM.sub("", term)
+    if not bare or any(bare in f for f in squashed):
+        return True
+    # An address typed loosely: "luca@outlook" finds luca.rossi@outlook.it —
+    # the part before @ anywhere in the mailbox name, the part after it as the
+    # start of the domain.
+    if term.count("@") == 1:
+        name, domain = term.split("@")
+        for f in fields:
+            if "@" in f:
+                f_name, f_domain = f.rsplit("@", 1)
+                if name in f_name and f_domain.startswith(domain):
+                    return True
+    return False
+
+
+def matches(fields, query: str) -> bool:
+    """Every word of the query has to turn up in one of the fields (any field,
+    any order), ignoring case, accents and punctuation.
+
+    A query that contains an earlier one can only ever match fewer accounts,
+    which is what lets SearchCache narrow a previous result."""
+    words = _fold(query).split()
+    return all(_term_matches(w, *fields) for w in words)
 
 
 def visible_services(vault_data: dict, query: str = "", sort_mode: str = "name_asc") -> list:
-    """Service names filtered by a search query and ordered by `sort_mode`.
-    The query matches against both the service name and its username."""
+    """Service names filtered by a search query and ordered by `sort_mode`."""
     services = ordered_services(vault_data, sort_mode)
-    q = (query or "").strip().lower()
-    if not q:
+    if not (query or "").strip():
         return services
-    return [s for s in services if q in haystack(s, vault_data[s])]
+    return [s for s in services if matches(search_fields(s, vault_data[s]), query)]
 
 
 class SearchCache:
     """Remembers what the search box would otherwise redo on every keystroke:
-    the lowercased text to match against, the order per sort mode, and the
+    the folded fields to match against, the order per sort mode, and the
     result of each query typed so far.
 
     Typing another character narrows the previous result instead of rescanning
-    the vault — a substring match can only ever shrink the set, so any query
-    containing an earlier one can be answered from that earlier result.
+    the vault — a longer query can only ever match fewer accounts (see
+    `matches`), so any query containing an earlier one can be answered from
+    that earlier result.
 
     The whole cache is dropped when `revision` changes, which is how the app
     says "the vault was edited".
@@ -57,7 +102,7 @@ class SearchCache:
 
     def __init__(self):
         self._revision = None
-        self._haystacks = {}
+        self._fields = {}
         self._ordered = {}
         self._results = {}
 
@@ -65,11 +110,11 @@ class SearchCache:
                  sort_mode: str = "name_asc") -> list:
         if revision != self._revision:
             self._revision = revision
-            self._haystacks = {s: haystack(s, e) for s, e in vault_data.items()}
+            self._fields = {s: search_fields(s, e) for s, e in vault_data.items()}
             self._ordered = {}
             self._results = {}
 
-        q = (query or "").strip().lower()
+        q = " ".join(_fold(query).split())
         key = (sort_mode, q)
         cached = self._results.get(key)
         if cached is not None:
@@ -79,7 +124,7 @@ class SearchCache:
             self._ordered[sort_mode] = ordered_services(vault_data, sort_mode)
         result = self._ordered[sort_mode]
         if q:
-            result = [s for s in self._narrowest(sort_mode, q) if q in self._haystacks[s]]
+            result = [s for s in self._narrowest(sort_mode, q) if matches(self._fields[s], q)]
         self._results[key] = result
         return result
 

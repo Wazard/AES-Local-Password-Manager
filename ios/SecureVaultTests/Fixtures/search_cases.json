@@ -1,0 +1,35 @@
+{
+ "about": "Shared by ios/tools/check_search.py (desktop) and VaultFormatTests (iOS), so both apps search the same way. Results are in name_asc order with favourites first.",
+ "entries": [
+  ["GitHub", {"user": "Luca.Rossi@Outlook.it", "url": "github.com", "favourite": true}],
+  ["Gmail", {"user": "luca.rossi@gmail.com", "url": "https://mail.google.com/"}],
+  ["Amazon", {"user": "luca.rossi@outlook.it", "url": "www.amazon.it"}],
+  ["Banca Intesa", {"user": "LR-1984", "url": "intesasanpaolo.com"}],
+  ["Café Nero", {"user": "barista", "url": ""}],
+  ["Work VPN", {"user": "l.rossi@acme-corp.example", "url": "vpn.acme-corp.example"}]
+ ],
+ "cases": [
+  {"q": "", "expect": ["GitHub", "Amazon", "Banca Intesa", "Café Nero", "Gmail", "Work VPN"]},
+  {"q": "github", "expect": ["GitHub"]},
+  {"q": "GITHUB", "expect": ["GitHub"]},
+  {"q": "luca.rossi@outlook.it", "expect": ["GitHub", "Amazon"]},
+  {"q": "LUCA.ROSSI@OUTLOOK.IT", "expect": ["GitHub", "Amazon"]},
+  {"q": "luca.rossi@", "expect": ["GitHub", "Amazon", "Gmail"]},
+  {"q": "luca@outlook", "expect": ["GitHub", "Amazon"]},
+  {"q": "rossi@gm", "expect": ["Gmail"]},
+  {"q": "@outlook", "expect": ["GitHub", "Amazon"]},
+  {"q": "luca rossi", "expect": ["GitHub", "Amazon", "Gmail"]},
+  {"q": "lucarossi", "expect": ["GitHub", "Amazon", "Gmail"]},
+  {"q": "outlook amazon", "expect": ["Amazon"]},
+  {"q": "amazon outlook", "expect": ["Amazon"]},
+  {"q": "google", "expect": ["Gmail"]},
+  {"q": "sanpaolo", "expect": ["Banca Intesa"]},
+  {"q": "lr1984", "expect": ["Banca Intesa"]},
+  {"q": "cafe", "expect": ["Café Nero"]},
+  {"q": "CAFÉ", "expect": ["Café Nero"]},
+  {"q": "acmecorp", "expect": ["Work VPN"]},
+  {"q": "  vpn   rossi ", "expect": ["Work VPN"]},
+  {"q": "-", "expect": ["GitHub", "Amazon", "Banca Intesa", "Café Nero", "Gmail", "Work VPN"]},
+  {"q": "nothing-like-this", "expect": []}
+ ]
+}

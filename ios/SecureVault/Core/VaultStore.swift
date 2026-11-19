@@ -43,8 +43,9 @@ final class VaultStore: ObservableObject {
 
     init() {
         UserDefaults.standard.register(defaults: [Prefs.lockGrace: 30, Prefs.clipboardSeconds: 60])
-        location = VaultFiles.current()
-        phase = location == nil ? .setup : .locked
+        let found = VaultFiles.current()
+        location = found
+        phase = found == nil ? .setup : .locked
     }
 
     var faceIDEnabled: Bool { UserDefaults.standard.bool(forKey: Prefs.faceID) }
@@ -325,21 +326,8 @@ final class VaultStore: ObservableObject {
 
     private static func hash(_ data: Data) -> Data { Data(SHA256.hash(data: data)) }
 
-    // MARK: - Listing (port of data_handler.ordered_services / visible_services)
-
     func visible(query: String, sort: SortMode) -> [Entry] {
-        var list = entries   // file order is oldest-first
-        switch sort {
-        case .nameAsc: list.sort { $0.name.lowercased() < $1.name.lowercased() }
-        case .nameDesc: list.sort { $0.name.lowercased() > $1.name.lowercased() }
-        case .timeNew: list.reverse()
-        case .timeOld: break
-        }
-        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-        if !q.isEmpty {
-            list = list.filter { $0.name.lowercased().contains(q) || $0.user.lowercased().contains(q) }
-        }
-        return list.filter(\.favourite) + list.filter { !$0.favourite }
+        Search.visible(entries, query: query, sort: sort)
     }
 
     func entry(_ id: UUID) -> Entry? { entries.first { $0.id == id } }

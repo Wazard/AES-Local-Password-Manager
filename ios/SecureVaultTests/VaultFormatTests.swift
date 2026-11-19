@@ -145,6 +145,27 @@ final class VaultFormatTests: XCTestCase {
         XCTAssertEqual(grouped.split(separator: "-").map(\.count), [6, 6, 6])
     }
 
+    /// The same cases ios/tools/check_search.py runs against the desktop search.
+    func testSearchMatchesDesktop() throws {
+        let spec = try XCTUnwrap(JSONSerialization.jsonObject(with: fixture("search_cases", "json")) as? [String: Any])
+        let rows = try XCTUnwrap(spec["entries"] as? [[Any]])
+        let session = SessionCrypto()
+        let entries = try rows.map { row -> Entry in
+            let name = try XCTUnwrap(row[0] as? String)
+            let f = try XCTUnwrap(row[1] as? [String: Any])
+            return Entry(name: name, user: f["user"] as? String ?? "", url: f["url"] as? String ?? "",
+                         favourite: f["favourite"] as? Bool ?? false, created: nil,
+                         sealedPassword: session.seal(""))
+        }
+        let cases = try XCTUnwrap(spec["cases"] as? [[String: Any]])
+        XCTAssertGreaterThan(cases.count, 10)
+        for c in cases {
+            let q = try XCTUnwrap(c["q"] as? String)
+            let want = try XCTUnwrap(c["expect"] as? [String])
+            XCTAssertEqual(Search.visible(entries, query: q, sort: .nameAsc).map(\.name), want, "query \(q)")
+        }
+    }
+
     func testStrengthRules() {
         XCTAssertFalse(PasswordStrength.evaluate("short1A").ok)
         XCTAssertTrue(PasswordStrength.evaluate("alllowercase").ok)
