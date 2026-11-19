@@ -16,7 +16,6 @@ struct SettingsView: View {
                     LabeledContent("File", value: store.location?.name ?? "—")
                     LabeledContent("Stored", value: store.location?.isExternal == true ? "Opened from Files" : "On this device")
                     Button("Open a different vault…") { picking = true }
-                    Button("Receive from PC over Wi-Fi…") { receiving = true }
                     if store.location?.isExternal == true && VaultFiles.localVaultExists {
                         Button("Switch to the vault on this device") { store.useLocalVault() }
                     }
@@ -24,6 +23,19 @@ struct SettingsView: View {
                     Text("Vault")
                 } footer: {
                     Text("A vault opened from Files (for example from OneDrive) is edited in place, so the PC sees the same accounts. Switching vaults locks the app.")
+                }
+                .cardRow()
+
+                Section {
+                    Button { receiving = true } label: {
+                        Label("Sync with PC over Wi-Fi", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                } header: {
+                    Text("Sync")
+                } footer: {
+                    Text(store.unsyncedCount == 0
+                         ? "Everything here is already on the PC."
+                         : "\(store.unsyncedCount) account(s) added, changed or deleted here since the last sync. Syncing sends them to the PC's vault and brings back what's new there.")
                 }
                 .cardRow()
 

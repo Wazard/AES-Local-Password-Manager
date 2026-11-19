@@ -191,7 +191,7 @@ struct EntryFormView: View {
         let newName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !newName.isEmpty else { problem = "Give the account a name."; return }
         let original = editing?.name
-        if newName != original && store.entries.contains(where: { $0.name == newName }) {
+        if newName != original && store.entries.contains(where: { $0.name == newName && !$0.isDeleted }) {
             problem = VaultError.duplicate(newName).errorDescription
             return
         }
@@ -199,22 +199,34 @@ struct EntryFormView: View {
         let user = self.user
         let site = url.trimmingCharacters(in: .whitespaces)
         let ok = await store.perform { entries in
+            if newName != original && entries.contains(where: { $0.name == newName && !$0.isDeleted }) {
+                throw VaultError.duplicate(newName)
+            }
+            // Reusing the name of an account deleted here: the PC still has
+            // that name, so this becomes an edit of it rather than a new one.
+            var reusesDeleted = false
+            if newName != original, let t = entries.firstIndex(where: { $0.name == newName && $0.isDeleted }) {
+                entries.remove(at: t)
+                reusesDeleted = true
+            }
             if let original {
                 // Edited in place, so a rename keeps the entry's spot in the vault.
-                guard let i = entries.firstIndex(where: { $0.name == original }) else {
+                guard let i = entries.firstIndex(where: { $0.name == original && !$0.isDeleted }) else {
                     throw VaultError.entryGone
                 }
-                if newName != original && entries.contains(where: { $0.name == newName }) {
-                    throw VaultError.duplicate(newName)
+                if newName != original && entries[i].renamedFrom == nil && entries[i].syncState != "new" {
+                    entries[i].renamedFrom = original   // the name the PC knows it by
                 }
                 entries[i].name = newName
                 entries[i].user = user
                 entries[i].url = site
                 if let sealed { entries[i].sealedPassword = sealed }
+                entries[i].markChanged()
+                if reusesDeleted { entries[i].syncState = "changed" }
             } else {
-                if entries.contains(where: { $0.name == newName }) { throw VaultError.duplicate(newName) }
                 entries.append(Entry(name: newName, user: user, url: site, favourite: false,
-                                     created: Entry.nowStamp(), sealedPassword: sealed ?? Data()))
+                                     created: Entry.nowStamp(), sealedPassword: sealed ?? Data(),
+                                     syncState: reusesDeleted ? "changed" : "new"))
             }
         }
         if ok { dismiss() }

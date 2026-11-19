@@ -109,15 +109,15 @@
    "hint": "A copy is saved every time you add or change an account. Backups are encrypted with your master password, and read-only so they are not deleted by accident. The newest 20 are kept, plus one per day for the last 60 days. Pick a OneDrive folder to keep copies off this computer."
   },
   "phone": {
-   "title": "Send to iPhone",
-   "intro": "On the iPhone, open Secure Vault and tap “Receive from PC”. Then pick the iPhone here and type the code it shows.",
+   "title": "Sync with iPhone",
+   "intro": "On the iPhone, open Secure Vault and tap “Connect to PC”. Then pick the iPhone here, or type the address it shows, and enter its code.",
    "devices": "iPhones on this network",
    "search_again": "Search again",
    "searching": "Looking for iPhones…",
    "none_found": "No iPhone found. Keep the Receive screen open on the phone, or type the address it shows below.",
    "address": "Or type the address the iPhone shows",
    "code": "Code shown on the iPhone",
-   "send": "Send vault",
+   "send": "Replace iPhone vault",
    "sending": "Sending…",
    "sent": "Sent to {device}. Confirm on the iPhone to start using it.",
    "need_target": "Pick an iPhone or type its address.",
@@ -129,7 +129,15 @@
    "err_busy": "The iPhone already received a vault. Start again on the phone.",
    "err_unreachable": "Couldn't reach the iPhone at {host}. Check that both are on the same Wi-Fi and the Receive screen is open.",
    "err_noreply": "The iPhone didn't answer. Try again.",
-   "hint": "The vault is sent exactly as it is stored here, encrypted with your master password. The iPhone asks before replacing anything and keeps its current vault as a backup."
+   "hint": "Sync brings the accounts you added, changed or deleted on the iPhone into this vault, and sends the result back. “Replace iPhone vault” overwrites the iPhone's vault with this one. Only encrypted vault files travel, never your master password.",
+   "sync": "Sync",
+   "syncing": "Syncing…",
+   "synced": "Synced with {device}: {n} change(s) from the iPhone added to this vault. The iPhone now has the same vault.",
+   "synced_none": "Synced with {device}: nothing new on the iPhone. It now has the same vault as this PC.",
+   "err_mismatch": "The iPhone's vault has a different master password from this one. Use “Replace iPhone vault” once, then sync from then on.",
+   "err_locked": "Unlock Secure Vault on the iPhone first.",
+   "err_phone_novault": "There's no vault on the iPhone yet. Use “Replace iPhone vault” to send it this one.",
+   "err_savefailed": "The iPhone's changes couldn't be saved on this PC. Nothing was changed on either side."
   },
   "details": {
    "username_label": "Username:",
@@ -297,15 +305,15 @@
    "hint": "Una copia viene salvata ogni volta che aggiungi o modifichi un account. I backup sono cifrati con la tua password maestra e in sola lettura, per non eliminarli per sbaglio. Vengono conservati i 20 più recenti, più uno al giorno per gli ultimi 60 giorni. Scegli una cartella OneDrive per tenere le copie fuori da questo computer."
   },
   "phone": {
-   "title": "Invia a iPhone",
-   "intro": "Sull'iPhone apri Secure Vault e tocca “Ricevi dal PC”. Poi scegli l'iPhone qui e inserisci il codice che mostra.",
+   "title": "Sincronizza con iPhone",
+   "intro": "Sull'iPhone apri Secure Vault e tocca “Connetti al PC”. Poi scegli l'iPhone qui, oppure inserisci l'indirizzo che mostra, e digita il suo codice.",
    "devices": "iPhone su questa rete",
    "search_again": "Cerca di nuovo",
    "searching": "Ricerca degli iPhone…",
    "none_found": "Nessun iPhone trovato. Tieni aperta la schermata di ricezione sul telefono, oppure inserisci qui sotto l'indirizzo che mostra.",
    "address": "Oppure inserisci l'indirizzo mostrato dall'iPhone",
    "code": "Codice mostrato sull'iPhone",
-   "send": "Invia cassaforte",
+   "send": "Sostituisci su iPhone",
    "sending": "Invio in corso…",
    "sent": "Inviata a {device}. Conferma sull'iPhone per iniziare a usarla.",
    "need_target": "Scegli un iPhone o inserisci il suo indirizzo.",
@@ -317,7 +325,15 @@
    "err_busy": "L'iPhone ha già ricevuto una cassaforte. Ricomincia dal telefono.",
    "err_unreachable": "Impossibile raggiungere l'iPhone all'indirizzo {host}. Verifica che siano sulla stessa rete Wi-Fi e che la schermata di ricezione sia aperta.",
    "err_noreply": "L'iPhone non ha risposto. Riprova.",
-   "hint": "La cassaforte viene inviata così com'è salvata qui, cifrata con la password principale. L'iPhone chiede conferma prima di sostituire qualcosa e conserva la cassaforte attuale come backup."
+   "hint": "Sincronizza porta in questa cassaforte gli account aggiunti, modificati o eliminati sull'iPhone e rimanda il risultato. “Sostituisci su iPhone” sovrascrive la cassaforte dell'iPhone con questa. Viaggiano solo file cifrati, mai la password principale.",
+   "sync": "Sincronizza",
+   "syncing": "Sincronizzazione…",
+   "synced": "Sincronizzato con {device}: {n} modifiche dall'iPhone aggiunte a questa cassaforte. Ora l'iPhone ha la stessa cassaforte.",
+   "synced_none": "Sincronizzato con {device}: niente di nuovo sull'iPhone. Ora ha la stessa cassaforte di questo PC.",
+   "err_mismatch": "La cassaforte dell'iPhone ha una password principale diversa da questa. Usa una volta “Sostituisci su iPhone”, poi sincronizza da lì in avanti.",
+   "err_locked": "Sblocca prima Secure Vault sull'iPhone.",
+   "err_phone_novault": "Sull'iPhone non c'è ancora una cassaforte. Usa “Sostituisci su iPhone” per inviargli questa.",
+   "err_savefailed": "Non è stato possibile salvare su questo PC le modifiche dell'iPhone. Nulla è stato cambiato su nessuno dei due."
   },
   "details": {
    "username_label": "Nome utente:",
@@ -485,15 +501,15 @@
    "hint": "Une copie est enregistrée à chaque ajout ou modification d'un compte. Les sauvegardes sont chiffrées avec votre mot de passe maître et en lecture seule, pour ne pas être supprimées par accident. Les 20 plus récentes sont conservées, plus une par jour pour les 60 derniers jours. Choisissez un dossier OneDrive pour garder des copies hors de cet ordinateur."
   },
   "phone": {
-   "title": "Envoyer vers l'iPhone",
-   "intro": "Sur l'iPhone, ouvrez Secure Vault et touchez « Recevoir du PC ». Choisissez ensuite l'iPhone ici et saisissez le code affiché.",
+   "title": "Synchroniser avec l'iPhone",
+   "intro": "Sur l'iPhone, ouvrez Secure Vault et touchez « Connecter au PC ». Choisissez ensuite l'iPhone ici, ou saisissez l'adresse qu'il affiche, puis entrez son code.",
    "devices": "iPhone sur ce réseau",
    "search_again": "Rechercher",
    "searching": "Recherche d'iPhone…",
    "none_found": "Aucun iPhone trouvé. Laissez l'écran de réception ouvert sur le téléphone, ou saisissez ci-dessous l'adresse qu'il affiche.",
    "address": "Ou saisissez l'adresse affichée par l'iPhone",
    "code": "Code affiché sur l'iPhone",
-   "send": "Envoyer le coffre",
+   "send": "Remplacer sur l'iPhone",
    "sending": "Envoi…",
    "sent": "Envoyé à {device}. Confirmez sur l'iPhone pour commencer à l'utiliser.",
    "need_target": "Choisissez un iPhone ou saisissez son adresse.",
@@ -505,7 +521,15 @@
    "err_busy": "L'iPhone a déjà reçu un coffre. Recommencez sur le téléphone.",
    "err_unreachable": "Impossible de joindre l'iPhone à l'adresse {host}. Vérifiez qu'ils sont sur le même Wi-Fi et que l'écran de réception est ouvert.",
    "err_noreply": "L'iPhone n'a pas répondu. Réessayez.",
-   "hint": "Le coffre est envoyé tel qu'il est stocké ici, chiffré avec votre mot de passe principal. L'iPhone demande confirmation avant de remplacer quoi que ce soit et garde son coffre actuel en sauvegarde."
+   "hint": "Synchroniser ajoute à ce coffre les comptes ajoutés, modifiés ou supprimés sur l'iPhone, et lui renvoie le résultat. « Remplacer sur l'iPhone » écrase le coffre de l'iPhone avec celui-ci. Seuls des fichiers chiffrés transitent, jamais votre mot de passe principal.",
+   "sync": "Synchroniser",
+   "syncing": "Synchronisation…",
+   "synced": "Synchronisé avec {device} : {n} modification(s) de l'iPhone ajoutée(s) à ce coffre. L'iPhone a maintenant le même coffre.",
+   "synced_none": "Synchronisé avec {device} : rien de nouveau sur l'iPhone. Il a maintenant le même coffre que ce PC.",
+   "err_mismatch": "Le coffre de l'iPhone a un autre mot de passe principal que celui-ci. Utilisez une fois « Remplacer sur l'iPhone », puis synchronisez ensuite.",
+   "err_locked": "Déverrouillez d'abord Secure Vault sur l'iPhone.",
+   "err_phone_novault": "Il n'y a pas encore de coffre sur l'iPhone. Utilisez « Remplacer sur l'iPhone » pour lui envoyer celui-ci.",
+   "err_savefailed": "Les modifications de l'iPhone n'ont pas pu être enregistrées sur ce PC. Rien n'a été changé d'un côté comme de l'autre."
   },
   "details": {
    "username_label": "Nom d'utilisateur :",
@@ -673,15 +697,15 @@
    "hint": "Der gemmes en kopi, hver gang du tilføjer eller ændrer en konto. Backups er krypteret med din hovedadgangskode og skrivebeskyttede, så de ikke slettes ved et uheld. De 20 nyeste beholdes, plus én om dagen de sidste 60 dage. Vælg en OneDrive-mappe for at holde kopier væk fra denne computer."
   },
   "phone": {
-   "title": "Send til iPhone",
-   "intro": "Åbn Secure Vault på iPhonen, og tryk på “Modtag fra pc”. Vælg derefter iPhonen her, og indtast den kode, den viser.",
+   "title": "Synkroniser med iPhone",
+   "intro": "Åbn Secure Vault på iPhonen, og tryk på “Forbind til pc”. Vælg derefter iPhonen her, eller indtast adressen, den viser, og indtast dens kode.",
    "devices": "iPhones på dette netværk",
    "search_again": "Søg igen",
    "searching": "Søger efter iPhones…",
    "none_found": "Ingen iPhone fundet. Hold modtageskærmen åben på telefonen, eller indtast adressen, den viser, nedenfor.",
    "address": "Eller indtast adressen, som iPhonen viser",
    "code": "Kode vist på iPhonen",
-   "send": "Send boks",
+   "send": "Erstat på iPhone",
    "sending": "Sender…",
    "sent": "Sendt til {device}. Bekræft på iPhonen for at tage den i brug.",
    "need_target": "Vælg en iPhone, eller indtast dens adresse.",
@@ -693,7 +717,15 @@
    "err_busy": "iPhonen har allerede modtaget en boks. Start forfra på telefonen.",
    "err_unreachable": "Kunne ikke nå iPhonen på {host}. Tjek, at begge er på samme Wi-Fi, og at modtageskærmen er åben.",
    "err_noreply": "iPhonen svarede ikke. Prøv igen.",
-   "hint": "Boksen sendes præcis som den er gemt her, krypteret med din hovedadgangskode. iPhonen spørger, før den erstatter noget, og gemmer sin nuværende boks som backup."
+   "hint": "Synkroniser henter de konti, du har tilføjet, ændret eller slettet på iPhonen, ind i denne boks og sender resultatet tilbage. “Erstat på iPhone” overskriver iPhonens boks med denne. Kun krypterede filer sendes, aldrig din hovedadgangskode.",
+   "sync": "Synkroniser",
+   "syncing": "Synkroniserer…",
+   "synced": "Synkroniseret med {device}: {n} ændring(er) fra iPhonen tilføjet til denne boks. iPhonen har nu den samme boks.",
+   "synced_none": "Synkroniseret med {device}: intet nyt på iPhonen. Den har nu den samme boks som denne pc.",
+   "err_mismatch": "iPhonens boks har en anden hovedadgangskode end denne. Brug “Erstat på iPhone” én gang, og synkroniser derefter.",
+   "err_locked": "Lås Secure Vault op på iPhonen først.",
+   "err_phone_novault": "Der er endnu ingen boks på iPhonen. Brug “Erstat på iPhone” for at sende den denne.",
+   "err_savefailed": "iPhonens ændringer kunne ikke gemmes på denne pc. Intet blev ændret nogen af stederne."
   },
   "details": {
    "username_label": "Brugernavn:",

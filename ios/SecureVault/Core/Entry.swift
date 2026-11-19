@@ -16,6 +16,20 @@ struct Entry: Identifiable {
     var sealedPassword: Data
     /// Keys this version doesn't know about, written back untouched.
     var extra: [(String, JSONValue)] = []
+    /// Not yet synced to the PC: "new", "changed" or "deleted" (see
+    /// data_handler.merge_phone_changes). Stored in the vault as "sync_pending".
+    var syncState: String?
+    /// The name the PC knows this entry by, if it was renamed here.
+    var renamedFrom: String?
+
+    /// Deleted here but kept until the PC has heard about it.
+    var isDeleted: Bool { syncState == "deleted" }
+
+    /// Record a change for the next sync. Something created here and never
+    /// synced stays "new" whatever happens to it afterwards.
+    mutating func markChanged() {
+        if syncState != "new" { syncState = "changed" }
+    }
 
     var createdDate: Date? {
         if case .number(let n)? = created, let t = Double(n) { return Date(timeIntervalSince1970: t) }
@@ -45,7 +59,8 @@ final class SessionCrypto {
 
 /// JSON payload <-> entries, in file order.
 enum VaultCodec {
-    private static let known: Set<String> = ["user", "pass", "url", "created", "favourite"]
+    private static let known: Set<String> = ["user", "pass", "url", "created", "favourite",
+                                             "sync_pending", "sync_renamed_from"]
 
     static func decode(_ json: Data, session: SessionCrypto) throws -> [Entry] {
         guard case .object(let services) = try JSON.parse(json) else { throw VaultError.damaged }
@@ -53,6 +68,8 @@ enum VaultCodec {
             var fields: [(String, JSONValue)] = []
             if case .object(let f) = value { fields = f }
             func field(_ key: String) -> JSONValue? { fields.first { $0.0 == key }?.1 }
+            var syncState = field("sync_pending")?.stringValue
+            if syncState == nil, field("sync_pending")?.boolValue == true { syncState = "changed" }
             return Entry(
                 name: name,
                 user: field("user")?.stringValue ?? "",
@@ -60,7 +77,9 @@ enum VaultCodec {
                 favourite: field("favourite")?.boolValue ?? false,
                 created: field("created"),
                 sealedPassword: session.seal(field("pass")?.stringValue ?? ""),
-                extra: fields.filter { !known.contains($0.0) })
+                extra: fields.filter { !known.contains($0.0) },
+                syncState: syncState,
+                renamedFrom: field("sync_renamed_from")?.stringValue)
         }
     }
 
@@ -75,6 +94,8 @@ enum VaultCodec {
             ]
             if let created = e.created { fields.append(("created", created)) }
             fields.append(("favourite", .bool(e.favourite)))
+            if let state = e.syncState { fields.append(("sync_pending", .string(state))) }
+            if let old = e.renamedFrom { fields.append(("sync_renamed_from", .string(old))) }
             return (e.name, .object(fields + e.extra))
         }
         return JSON.serialize(.object(services))

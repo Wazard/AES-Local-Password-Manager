@@ -38,6 +38,7 @@ jobs:
           build/venv/bin/pip install -q argon2-cffi cryptography
           build/venv/bin/python tools/check_roundtrip.py build/export/roundtrip.pwmanager
           build/venv/bin/python tools/check_search.py
+          build/venv/bin/python tools/check_sync.py build/export
 
       - name: Build the unsigned .ipa
         run: |

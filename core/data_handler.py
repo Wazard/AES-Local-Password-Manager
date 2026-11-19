@@ -228,3 +228,41 @@ def modify_entry(vault_data: dict, service: str, new_user: str = None, new_pass:
         vault_data[service]['pass'] = new_pass
         
     return True
+
+
+# --- Syncing with the iPhone app ---------------------------------------------
+# The iOS app marks every entry it changes; these keys live inside the
+# encrypted vault and are dropped again when the PC applies the change.
+SYNC_STATE = "sync_pending"          # "new" | "changed" | "deleted" (True: changed)
+SYNC_RENAMED_FROM = "sync_renamed_from"   # the name the PC knows the entry by
+
+
+def merge_phone_changes(vault_data: dict, phone_vault: dict, seal=lambda p: p) -> dict:
+    """Apply the changes the iPhone marked as not yet synced.
+
+    New and edited entries replace the PC's version (the phone's edit is the
+    newer one); a rename on the phone renames the PC's entry in place; a
+    deletion on the phone deletes it here. Entries the phone didn't mark are
+    left exactly as the PC has them. `seal` turns a plaintext password into
+    how `vault_data` stores it (the app's per-session encryption).
+
+    Returns {"added": [...], "changed": [...], "deleted": [...]}.
+    """
+    report = {"added": [], "changed": [], "deleted": []}
+    for name, entry in phone_vault.items():
+        state = entry.get(SYNC_STATE)
+        if not state:
+            continue
+        old = entry.get(SYNC_RENAMED_FROM)
+        if state == "deleted":
+            for gone in (name, old):
+                if gone and delete_entry(vault_data, gone):
+                    report["deleted"].append(gone)
+            continue
+        incoming = {k: v for k, v in entry.items() if k not in (SYNC_STATE, SYNC_RENAMED_FROM)}
+        incoming["pass"] = seal(incoming.get("pass", ""))
+        if old and old != name and old in vault_data and name not in vault_data:
+            rename_entry(vault_data, old, name)
+        report["changed" if name in vault_data else "added"].append(name)
+        vault_data[name] = incoming
+    return report

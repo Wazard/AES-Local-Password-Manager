@@ -3,25 +3,30 @@ import Network
 import CryptoKit
 import UIKit
 
-/// The message the PC sends (see core/phone_transfer.py for the other side):
+/// The messages exchanged with the PC (core/phone_transfer.py is the other side):
 ///
-///     "SVX1" | name length (1) | PC name | vault size (4, big-endian) | vault
-///            | HMAC-SHA256(key = the code shown here, message = everything before)
+///     kind (4) | name length (1) | sender name | payload size (4, big-endian) | payload
+///              | HMAC-SHA256(key = the code shown here, message = everything before)
+///
+/// SVX1: the PC replaces this iPhone's vault. SVY1/SVY2/SVY3: sync — the PC
+/// asks for this vault, gets it, and sends back the merged one.
 enum TransferFrame {
-    static let magic = Array("SVX1".utf8)
+    static let push = "SVX1", syncRequest = "SVY1", syncVault = "SVY2", syncMerged = "SVY3"
     static let maxSize = 16 * 1024 * 1024
 
     enum Outcome: Equatable {
         case needMore
-        /// The reason sent back to the PC: badcode, toolarge, notvault, protocol.
+        /// The reason sent back to the PC: badcode, toolarge, protocol.
         case rejected(String)
-        case accepted(sender: String, vault: Data)
+        case accepted(kind: String, sender: String, payload: Data)
     }
 
-    static func parse(_ buffer: Data, code: String) -> Outcome {
+    static func parse(_ buffer: Data, code: String, accepting kinds: [String]) -> Outcome {
         let b = [UInt8](buffer)
-        guard b.count >= 5 else { return Array(b.prefix(4)) == Array(magic.prefix(b.count)) ? .needMore : .rejected("protocol") }
-        guard Array(b[0..<4]) == magic else { return .rejected("protocol") }
+        guard b.count >= 5 else {
+            return kinds.contains { Array(Array($0.utf8).prefix(b.count)) == b } ? .needMore : .rejected("protocol")
+        }
+        guard let kind = kinds.first(where: { Array($0.utf8) == Array(b[0..<4]) }) else { return .rejected("protocol") }
         let nameLength = Int(b[4])
         let sizeAt = 5 + nameLength
         guard b.count >= sizeAt + 4 else { return .needMore }
@@ -35,9 +40,19 @@ enum TransferFrame {
             Data(b[bodyEnd...]), authenticating: Data(b[0..<bodyEnd]),
             using: SymmetricKey(data: Data(code.utf8)))
         guard valid else { return .rejected("badcode") }
-        let vault = Data(b[(sizeAt + 4)..<bodyEnd])
-        guard VaultFormat.looksLikeVault(vault) else { return .rejected("notvault") }
-        return .accepted(sender: String(decoding: b[5..<sizeAt], as: UTF8.self), vault: vault)
+        return .accepted(kind: kind, sender: String(decoding: b[5..<sizeAt], as: UTF8.self),
+                         payload: Data(b[(sizeAt + 4)..<bodyEnd]))
+    }
+
+    static func build(_ kind: String, payload: Data, sender: String, code: String) -> Data {
+        let name = Array(sender.utf8.prefix(255))
+        var body = Data(kind.utf8)
+        body.append(UInt8(name.count))
+        body.append(contentsOf: name)
+        withUnsafeBytes(of: UInt32(payload.count).bigEndian) { body.append(contentsOf: $0) }
+        body.append(payload)
+        body.append(contentsOf: HMAC<SHA256>.authenticationCode(for: body, using: SymmetricKey(data: Data(code.utf8))))
+        return body
     }
 }
 
@@ -54,6 +69,8 @@ final class VaultReceiver: ObservableObject {
         case idle
         case waiting
         case received(ReceivedVault)
+        /// A sync finished; the vault file now holds the merged vault.
+        case synced(String)
         case failed(String)
         /// iOS hasn't allowed Local Network access (yet): on the very first
         /// try it fails while its own permission prompt is still on screen.
@@ -73,8 +90,11 @@ final class VaultReceiver: ObservableObject {
 
     private var listener: NWListener?
     private var wrongCodes = 0
+    /// The vault a sync reads and replaces; nil when there is none yet.
+    private var location: VaultLocation?
 
-    func start() {
+    func start(location: VaultLocation?) {
+        self.location = location
         code = String(format: "%06d", Int.random(in: 0...999_999))
         wrongCodes = 0
         listen(announce: true)
@@ -154,18 +174,22 @@ final class VaultReceiver: ObservableObject {
         connection.start(queue: .main)
         // A stalled sender doesn't get to hold the connection open.
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { connection.cancel() }
-        read(connection, Data())
+        read(connection, Data(), accepting: [TransferFrame.push, TransferFrame.syncRequest])
     }
 
-    private func read(_ connection: NWConnection, _ buffer: Data) {
+    private func read(_ connection: NWConnection, _ buffer: Data, accepting kinds: [String]) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 256 * 1024) { [weak self] data, _, isComplete, error in
             Task { @MainActor in
                 guard let self else { return connection.cancel() }
                 var buffer = buffer
                 if let data { buffer.append(data) }
-                switch TransferFrame.parse(buffer, code: self.code) {
+                switch TransferFrame.parse(buffer, code: self.code, accepting: kinds) {
                 case .needMore:
-                    if isComplete || error != nil { connection.cancel() } else { self.read(connection, buffer) }
+                    if isComplete || error != nil {
+                        connection.cancel()
+                    } else {
+                        self.read(connection, buffer, accepting: kinds)
+                    }
                 case .rejected(let reason):
                     self.reply(connection, "ERR \(reason)")
                     if reason == "badcode" {
@@ -174,14 +198,54 @@ final class VaultReceiver: ObservableObject {
                             self.fail("Too many wrong codes. Start again to get a new one.")
                         }
                     }
-                case .accepted(let sender, let vault):
-                    // Two PCs sending at once: the first one wins.
-                    guard self.state == .waiting else { return self.reply(connection, "ERR busy") }
-                    self.reply(connection, "OK")
-                    self.stop()
-                    self.state = .received(ReceivedVault(sender: sender, data: vault))
+                case .accepted(let kind, let sender, let payload):
+                    self.handle(kind, sender: sender, payload: payload, on: connection)
                 }
             }
+        }
+    }
+
+    private func handle(_ kind: String, sender: String, payload: Data, on connection: NWConnection) {
+        // Two PCs at once: the first one wins.
+        guard state == .waiting else { return reply(connection, "ERR busy") }
+        switch kind {
+        case TransferFrame.push:
+            guard VaultFormat.looksLikeVault(payload) else { return reply(connection, "ERR notvault") }
+            reply(connection, "OK")
+            stop()
+            state = .received(ReceivedVault(sender: sender, data: payload))
+
+        case TransferFrame.syncRequest:
+            // The phone needn't be unlocked: only the encrypted file travels,
+            // and the PC opens it with its own key.
+            guard let location, let blob = try? VaultFiles.read(location) else {
+                return reply(connection, "ERR novault")
+            }
+            let frame = TransferFrame.build(TransferFrame.syncVault, payload: blob,
+                                            sender: UIDevice.current.name, code: code)
+            connection.send(content: frame, completion: .contentProcessed { [weak self] error in
+                Task { @MainActor in
+                    guard let self, error == nil else { return connection.cancel() }
+                    self.read(connection, Data(), accepting: [TransferFrame.syncMerged])
+                }
+            })
+
+        case TransferFrame.syncMerged:
+            guard VaultFormat.looksLikeVault(payload) else { return reply(connection, "ERR notvault") }
+            guard let location else { return reply(connection, "ERR novault") }
+            do {
+                // The vault as it was before the sync stays in the backups.
+                if let current = try? VaultFiles.read(location) { VaultFiles.makeBackup(current) }
+                try VaultFiles.write(payload, to: location)
+            } catch {
+                return reply(connection, "ERR savefailed")
+            }
+            reply(connection, "OK")
+            stop()
+            state = .synced(sender)
+
+        default:
+            reply(connection, "ERR protocol")
         }
     }
 

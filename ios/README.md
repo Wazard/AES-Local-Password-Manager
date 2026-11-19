@@ -41,7 +41,7 @@ show up on the PC too. Before every save the app re-reads the file. If the PC
 saved in the meantime, the PC's version is loaded first and your change is
 applied on top of it, so neither side's edits are overwritten.
 
-### Or send it from the PC over Wi-Fi
+### Or sync with the PC over Wi-Fi
 
 No cloud folder needed. With the phone and the PC on the same network:
 
@@ -53,12 +53,20 @@ No cloud folder needed. With the phone and the PC on the same network:
 3. Type the code and click **Send vault**, then tap **Use this vault** on the
    phone and unlock with your master password.
 
+After that, use **Sync** to keep the two in step. On the iPhone open
+**Settings › Sync with PC over Wi-Fi**. On the PC click the phone icon, type
+the address and code, and click **Sync**. Everything you added, changed,
+renamed or deleted on the iPhone since the last sync goes into the PC's vault,
+and the iPhone gets the merged vault back, including what's new on the PC.
+If the same account was edited on both sides, the iPhone's edit wins.
+**Replace iPhone vault** on the PC overwrites the iPhone instead.
+
 The file is sent exactly as it is stored, already encrypted with your master
 password. The code proves the file came from your PC, and the phone stops
 listening after one transfer or five wrong codes. The received vault is stored
 in the app. If one was already there it goes to the backups first, and the
-app switches to the new one. This is a copy, so later edits don't sync. Use a
-OneDrive vault for that, or send it again.
+app switches to the new one. Syncing needs both apps open on the same network;
+it doesn't happen in the background.
 
 You can also **Create a new vault** that lives in the app
 (Files › On My iPhone › Secure Vault). Every save keeps a dated backup in the

@@ -232,11 +232,40 @@ final class VaultStore: ObservableObject {
         await perform { entries in
             guard let i = entries.firstIndex(where: { $0.name == name }) else { throw VaultError.entryGone }
             entries[i].favourite.toggle()
+            entries[i].markChanged()
         }
     }
 
+    /// In a vault kept on this iPhone, an account the PC may have is only
+    /// marked deleted, so the next sync deletes it there too; it disappears
+    /// for good when the PC sends the merged vault back. One created here and
+    /// never synced, or one in a vault opened from Files (the PC's own file),
+    /// is simply removed.
     func delete(_ name: String) async {
-        await perform { entries in entries.removeAll { $0.name == name } }
+        let keepTombstone = location?.isExternal == false
+        await perform { entries in
+            guard let i = entries.firstIndex(where: { $0.name == name }) else { return }
+            if keepTombstone && entries[i].syncState != "new" {
+                entries[i].syncState = "deleted"
+            } else {
+                entries.remove(at: i)
+            }
+        }
+    }
+
+    /// Accounts changed here since the last sync with the PC.
+    var unsyncedCount: Int { entries.filter { $0.syncState != nil }.count }
+
+    /// After a sync the file holds the merged vault: show it (same key, as
+    /// the PC opened the phone's copy with its own). Locks if that fails.
+    func reloadAfterSync() async {
+        guard phase == .unlocked, let key, let location else { return }
+        do {
+            let blob = try await Task.detached { try VaultFiles.read(location) }.value
+            try load(payload: try VaultFormat.open(blob, key: key), blob: blob, key: key)
+        } catch {
+            lock()
+        }
     }
 
     func changeMasterPassword(current: String, new: String) async -> Bool {
@@ -330,5 +359,5 @@ final class VaultStore: ObservableObject {
         Search.visible(entries, query: query, sort: sort)
     }
 
-    func entry(_ id: UUID) -> Entry? { entries.first { $0.id == id } }
+    func entry(_ id: UUID) -> Entry? { entries.first { $0.id == id && !$0.isDeleted } }
 }

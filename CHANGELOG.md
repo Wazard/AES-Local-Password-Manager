@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- **Sync with iPhone**: accounts added, changed, renamed or deleted on the
+  iPhone are marked, and **Sync** on the PC's phone screen applies them to the
+  PC's vault and sends the merged vault back, so both end up the same. The
+  old Send to iPhone is now **Replace iPhone vault**.
+
 ## 1.3.0
 
 ### Added

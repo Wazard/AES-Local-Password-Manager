@@ -23,8 +23,9 @@ localhost connection.
   `vault_bk_2026_08_08_1432_01.pwmanager` so the folder sorts chronologically,
   kept in OneDrive when there is one, and restorable from inside the app.
 - **Editable account names** — renaming an account keeps its place in the vault.
-- **Send to iPhone** — hand the vault to the iOS app over your Wi-Fi, confirmed
-  with a code shown on the phone.
+- **Sync with iPhone** — over your Wi-Fi, confirmed with a code shown on the
+  phone: what you add or change on the iPhone comes into the PC's vault, and
+  the iPhone gets the PC's accounts back.
 - **Auto-lock and tray** — re-locks after inactivity and can keep running in the
   system tray.
 - **Localisation** — English, Italian, French, and Danish.

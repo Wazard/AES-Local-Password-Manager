@@ -117,20 +117,81 @@ final class VaultFormatTests: XCTestCase {
         XCTAssertEqual(fields.first?.0, "Café ☕ 😀")
     }
 
-    /// transfer_frame.bin is what the PC's "Send to iPhone" puts on the wire
-    /// (core/phone_transfer.build_message), with code 123456.
+    /// transfer_frame.bin is what the PC's "Replace iPhone vault" puts on the
+    /// wire (core/phone_transfer.build_message), with code 123456.
     func testAcceptsTransferFromPC() throws {
+        let kinds = [TransferFrame.push, TransferFrame.syncRequest]
         let frame = try fixture("transfer_frame", "bin")
         let vault = try fixture("vault_v2", "bin")
-        XCTAssertEqual(TransferFrame.parse(frame, code: "123456"),
-                       .accepted(sender: "TEST-PC \u{2615}", vault: vault))
-        XCTAssertEqual(TransferFrame.parse(frame, code: "123457"), .rejected("badcode"))
-        XCTAssertEqual(TransferFrame.parse(frame.prefix(40), code: "123456"), .needMore)
-        XCTAssertEqual(TransferFrame.parse(frame.prefix(2), code: "123456"), .needMore)
-        XCTAssertEqual(TransferFrame.parse(frame + Data([0]), code: "123456"), .rejected("protocol"))
-        XCTAssertEqual(TransferFrame.parse(Data("GET / HTTP/1.1".utf8), code: "123456"), .rejected("protocol"))
+        XCTAssertEqual(TransferFrame.parse(frame, code: "123456", accepting: kinds),
+                       .accepted(kind: "SVX1", sender: "TEST-PC \u{2615}", payload: vault))
+        XCTAssertEqual(TransferFrame.parse(frame, code: "123457", accepting: kinds), .rejected("badcode"))
+        XCTAssertEqual(TransferFrame.parse(frame.prefix(40), code: "123456", accepting: kinds), .needMore)
+        XCTAssertEqual(TransferFrame.parse(frame.prefix(2), code: "123456", accepting: kinds), .needMore)
+        XCTAssertEqual(TransferFrame.parse(frame + Data([0]), code: "123456", accepting: kinds), .rejected("protocol"))
+        XCTAssertEqual(TransferFrame.parse(Data("GET / HTTP/1.1".utf8), code: "123456", accepting: kinds),
+                       .rejected("protocol"))
         let huge = Data("SVX1".utf8) + Data([0, 0x7F, 0xFF, 0xFF, 0xFF])
-        XCTAssertEqual(TransferFrame.parse(huge, code: "123456"), .rejected("toolarge"))
+        XCTAssertEqual(TransferFrame.parse(huge, code: "123456", accepting: kinds), .rejected("toolarge"))
+    }
+
+    /// sync_request.bin is the PC's "send me your vault" (code 123456). The
+    /// reply built here is checked by ios/tools/check_sync.py with the desktop code.
+    func testSyncMessages() throws {
+        let request = try fixture("sync_request", "bin")
+        XCTAssertEqual(TransferFrame.parse(request, code: "123456",
+                                           accepting: [TransferFrame.push, TransferFrame.syncRequest]),
+                       .accepted(kind: "SVY1", sender: "TEST-PC", payload: Data()))
+        // Out of turn: only the merged vault is expected after the reply.
+        XCTAssertEqual(TransferFrame.parse(request, code: "123456", accepting: [TransferFrame.syncMerged]),
+                       .rejected("protocol"))
+
+        let vault = try fixture("vault_v2", "bin")
+        let reply = TransferFrame.build(TransferFrame.syncVault, payload: vault, sender: "Test iPhone", code: "123456")
+        XCTAssertEqual(TransferFrame.parse(reply, code: "123456", accepting: [TransferFrame.syncVault]),
+                       .accepted(kind: "SVY2", sender: "Test iPhone", payload: vault))
+        export("sync_reply.bin", reply)
+    }
+
+    /// A vault with every kind of change marked; check_sync.py merges it into
+    /// the fixture vault with the desktop code and checks the result.
+    func testSyncMarks() throws {
+        let exp = try expected()
+        let opened = try VaultFormat.open(try fixture("vault_v2", "bin"), password: exp.password)
+        let session = SessionCrypto()
+        var entries = try VaultCodec.decode(try Gzip.decompress(opened.payload), session: session)
+        func index(_ name: String) throws -> Int { try XCTUnwrap(entries.firstIndex { $0.name == name }) }
+
+        let github = try index("GitHub")
+        entries[github].user = "octo-new"
+        entries[github].markChanged()
+        let legacy = try index("Legacy")
+        entries[legacy].renamedFrom = "Legacy"
+        entries[legacy].name = "Legacy Renamed"
+        entries[legacy].markChanged()
+        entries[try index("Bank")].syncState = "deleted"
+        entries.append(Entry(name: "Added on iOS", user: "ios", url: "apple.com", favourite: true,
+                             created: Entry.nowStamp(), sealedPassword: session.seal("new-pw"), syncState: "new"))
+
+        let blob = try VaultFormat.seal(try Gzip.compress(VaultCodec.encode(entries, session: session)),
+                                        with: opened.key)
+        let again = try VaultCodec.decode(try Gzip.decompress(try VaultFormat.open(blob, key: opened.key)),
+                                          session: session)
+        XCTAssertEqual(again.first { $0.name == "GitHub" }?.syncState, "changed")
+        XCTAssertEqual(again.first { $0.name == "Legacy Renamed" }?.renamedFrom, "Legacy")
+        XCTAssertEqual(again.first { $0.name == "Bank" }?.isDeleted, true)
+        XCTAssertEqual(again.first { $0.name == "Bank" }?.extra.count, 1, "unknown keys still kept")
+        XCTAssertFalse(Search.visible(again, query: "", sort: .nameAsc).contains { $0.name == "Bank" },
+                       "deleted accounts are hidden")
+        var added = try XCTUnwrap(again.last)
+        added.markChanged()
+        XCTAssertEqual(added.syncState, "new", "an unsynced new account stays new when edited")
+        export("sync_phone_vault.pwmanager", blob)
+    }
+
+    private func export(_ name: String, _ data: Data) {
+        guard let dir = ProcessInfo.processInfo.environment["SV_EXPORT_DIR"] else { return }
+        try? data.write(to: URL(fileURLWithPath: dir).appendingPathComponent(name))
     }
 
     func testGeneratorHonoursOptions() {

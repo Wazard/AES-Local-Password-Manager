@@ -105,3 +105,16 @@ def encrypt_data(data: bytes, password: str) -> bytes:
 def decrypt_data(encrypted_blob: bytes, password: str) -> bytes:
     salt, nonce, ciphertext = encrypted_blob[:16], encrypted_blob[16:28], encrypted_blob[28:]
     return AESGCM(derive_key(password, salt)).decrypt(nonce, ciphertext, None)
+
+
+def open_with_key(blob: bytes, key: bytes, salt: bytes, params: dict) -> bytes:
+    """Decrypts a v2 vault with an already-derived key — used to read the
+    iPhone's copy, which shares this vault's salt and parameters. Raises
+    ValueError if the file was keyed differently (another master password)."""
+    if blob[:4] != MAGIC or len(blob) < 26 + 12 + 16:
+        raise ValueError("not a v2 vault")
+    header_params = {"time": blob[4], "memory": int.from_bytes(blob[5:9], "big"),
+                     "parallel": blob[9]}
+    if blob[10:26] != salt or header_params != dict(params):
+        raise ValueError("vault was keyed differently")
+    return AESGCM(key).decrypt(blob[26:38], blob[38:], None)

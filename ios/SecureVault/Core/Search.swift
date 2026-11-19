@@ -27,7 +27,7 @@ enum Search {
 
     /// Port of data_handler.visible_services: sorted, filtered, favourites first.
     static func visible(_ entries: [Entry], query: String, sort: SortMode) -> [Entry] {
-        var list = entries   // file order is oldest-first
+        var list = entries.filter { !$0.isDeleted }   // file order is oldest-first
         switch sort {
         case .nameAsc: list.sort { $0.name.lowercased() < $1.name.lowercased() }
         case .nameDesc: list.sort { $0.name.lowercased() > $1.name.lowercased() }

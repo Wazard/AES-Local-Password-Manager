@@ -43,6 +43,8 @@ def main():
     # What "Send to iPhone" puts on the wire for that vault, with code 123456.
     write("transfer_frame.bin", phone_transfer.build_message(v2, "123456", "TEST-PC ☕"))
     write("vault_v1.bin", encryption.encrypt_data(payload, PASSWORD))
+    # The PC's sync request ("send me your vault"), with code 123456.
+    write("sync_request.bin", phone_transfer.build_frame(phone_transfer.SYNC_REQUEST, b"", "123456", "TEST-PC"))
     with open(os.path.join(OUT, "expected.json"), "w", encoding="utf-8") as f:
         json.dump({"password": PASSWORD, "order": list(VAULT),
                    "entries": VAULT}, f, ensure_ascii=False, indent=1)

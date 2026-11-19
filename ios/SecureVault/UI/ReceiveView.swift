@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// "Receive from PC": listens on the Wi-Fi while open, shows the code the PC
-/// must type, and asks before a received vault replaces anything.
+/// "Connect to PC": listens on the Wi-Fi while open and shows the code the PC
+/// must type. The PC either syncs (this vault goes to the PC, the merged one
+/// comes back) or replaces this vault, which asks here first.
 struct ReceiveView: View {
     @EnvironmentObject private var store: VaultStore
     @Environment(\.dismiss) private var dismiss
@@ -15,6 +16,7 @@ struct ReceiveView: View {
                     switch receiver.state {
                     case .idle, .waiting: waiting
                     case .received(let vault): received(vault)
+                    case .synced(let sender): synced(sender)
                     case .failed(let message): failed(message)
                     case .needsLocalNetwork: needsLocalNetwork
                     }
@@ -22,7 +24,7 @@ struct ReceiveView: View {
                 .padding(24)
             }
             .background(Theme.background.ignoresSafeArea())
-            .navigationTitle("Receive from PC")
+            .navigationTitle("Connect to PC")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(Theme.bar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -30,15 +32,19 @@ struct ReceiveView: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } }
             }
         }
-        .onAppear { receiver.start() }
+        .onAppear { receiver.start(location: store.location) }
         .onDisappear { receiver.stop() }
         // iOS suspends the app in the background, so the listener can't outlive it.
         .onChange(of: scenePhase) { phase in
             if phase == .background { receiver.stop() }
             // Back from the permission prompt or from Settings: try again by itself.
             if phase == .active && (receiver.state == .idle || receiver.state == .needsLocalNetwork) {
-                receiver.start()
+                receiver.start(location: store.location)
             }
+        }
+        .onChange(of: receiver.state) { state in
+            // Show the merged vault straight away if it is open here.
+            if case .synced = state { Task { await store.reloadAfterSync() } }
         }
     }
 
@@ -57,7 +63,7 @@ struct ReceiveView: View {
                 }
             }
             .buttonStyle(PrimaryButton())
-            Button("Try again") { receiver.start() }
+            Button("Try again") { receiver.start(location: store.location) }
                 .buttonStyle(SecondaryButton())
         }
     }
@@ -67,7 +73,7 @@ struct ReceiveView: View {
             Image(systemName: "laptopcomputer.and.iphone")
                 .font(.system(size: 48))
                 .foregroundStyle(Theme.primary)
-            Text("On your PC, open Secure Vault and choose **Send to iPhone**. Pick this iPhone (or type its address) and enter this code:")
+            Text("On your PC, open Secure Vault, click the phone icon and choose **Sync**. Pick this iPhone (or type its address) and enter this code:")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(Theme.secondaryText)
             Text(spaced(receiver.code))
@@ -135,13 +141,28 @@ struct ReceiveView: View {
         }
     }
 
+    private func synced(_ sender: String) -> some View {
+        VStack(spacing: 20) {
+            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(Theme.positive)
+            Text("Synced with \(sender)").font(.title3.bold()).multilineTextAlignment(.center)
+            Text("Your changes are in the PC's vault, and this iPhone now has the same vault as the PC. The previous version is kept in the backups.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.secondaryText)
+                .multilineTextAlignment(.center)
+            Button("Done") { dismiss() }
+                .buttonStyle(PrimaryButton())
+        }
+    }
+
     private func failed(_ message: String) -> some View {
         VStack(spacing: 20) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundStyle(Theme.negative)
             Text(message).multilineTextAlignment(.center)
-            Button("Start again") { receiver.start() }
+            Button("Start again") { receiver.start(location: store.location) }
                 .buttonStyle(PrimaryButton())
         }
     }

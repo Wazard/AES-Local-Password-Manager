@@ -41,7 +41,7 @@ struct SetupView: View {
                 .padding(.bottom, 8)
 
             Button { receiving = true } label: {
-                Label("Receive from your PC over Wi-Fi", systemImage: "wifi")
+                Label("Get your vault from your PC over Wi-Fi", systemImage: "wifi")
             }
             .buttonStyle(SecondaryButton())
 
@@ -130,7 +130,7 @@ struct UnlockView: View {
 
                 HStack(spacing: 20) {
                     Button("Use a different vault") { store.chooseAnotherVault() }
-                    Button("Receive from PC") { receiving = true }
+                    Button("Connect to PC") { receiving = true }
                 }
                 .font(.footnote)
                 Text("v\(AppInfo.version)").font(.caption2).foregroundStyle(Theme.muted)
