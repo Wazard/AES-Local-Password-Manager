@@ -28,10 +28,6 @@
 - Inline validation on the account form, including duplicate names.
 - Website URL and date added are shown on the account detail screen.
 
-### Fixed
-
-- The frozen build no longer depends on files that were not bundled with it.
-
 ## 1.1.0
 
 ### Fixed
