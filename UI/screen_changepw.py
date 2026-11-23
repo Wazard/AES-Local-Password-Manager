@@ -89,6 +89,7 @@ class ChangeMasterMixin:
                 self.after(900, self.show_dashboard)
 
         bar = ui.footer(self)
-        ui.primary_button(bar, self.t("changepw.save"), submit, height=42).pack(fill="x")
+        ui.default_button(self, ui.primary_button(
+            bar, self.t("changepw.save"), submit, height=42)).pack(fill="x")
         self._changepw = {"current": current, "new": new, "confirm": confirm,
                           "meter": meter, "match": match_line, "status": status}

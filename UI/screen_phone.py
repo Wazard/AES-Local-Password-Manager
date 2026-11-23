@@ -53,13 +53,13 @@ class PhoneMixin:
         ui.field_label(body, self.t("phone.code")).pack(anchor="w", pady=(T.GAP_L, 0))
         self._ph_code = ui.text_field(body, placeholder="000 000", mono=True)
         self._ph_code.pack(fill="x", pady=(4, 0))
-        self._ph_code.bind("<Return>", lambda _e: self._phone_sync())
 
         # Sync is the everyday action: it keeps what was changed on the
         # iPhone. Sending replaces the iPhone's vault with this one.
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(fill="x", pady=(T.GAP, 0))
-        self._ph_sync = ui.primary_button(buttons, self.t("phone.sync"), self._phone_sync)
+        self._ph_sync = ui.default_button(
+            self, ui.primary_button(buttons, self.t("phone.sync"), self._phone_sync))
         self._ph_sync.pack(side="left", expand=True, fill="x")
         self._ph_send = ui.secondary_button(buttons, self.t("phone.send"), self._phone_send)
         self._ph_send.pack(side="left", expand=True, fill="x", padx=(T.GAP_S, 0))
@@ -112,11 +112,11 @@ class PhoneMixin:
         if self._ph_target.get() not in hosts and not self._ph_address.get().strip():
             self._ph_target.set(hosts[0])
         for device, value in zip(found, hosts):
-            ctk.CTkRadioButton(
+            ui.focusable(ctk.CTkRadioButton(
                 self._ph_list, text="%s  ·  %s" % (device["name"], device["host"]),
                 variable=self._ph_target, value=value, font=T.font(T.S_BODY),
                 radiobutton_width=18, radiobutton_height=18,
-                command=lambda: ui.set_text(self._ph_address, "")).pack(anchor="w", pady=3)
+                command=lambda: ui.set_text(self._ph_address, ""))).pack(anchor="w", pady=3)
 
     # --- sending and syncing --------------------------------------------
     def _phone_request(self):

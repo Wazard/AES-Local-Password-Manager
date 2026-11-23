@@ -87,8 +87,8 @@ class GeneratorMixin:
             # Debounce: the slider fires continuously while dragging.
             self._schedule_regenerate()
 
-        slider = ctk.CTkSlider(options, from_=8, to=40, number_of_steps=32,
-                               command=on_length, height=18, button_length=6)
+        slider = ui.focusable(ctk.CTkSlider(options, from_=8, to=40, number_of_steps=32,
+                                            command=on_length, height=18, button_length=6))
         slider.set(18)
         slider.pack(fill="x", padx=T.PAD_CARD, pady=(T.GAP_S, 0))
 
@@ -106,10 +106,10 @@ class GeneratorMixin:
                 ("generator.uppercase", self.gen_upper_var),
                 ("generator.numbers", self.gen_digits_var),
                 ("generator.symbols", self.gen_symbols_var))):
-            ctk.CTkCheckBox(checks, text=self.t(key), variable=var,
-                            command=self.regenerate_password,
-                            font=T.font(T.S_LABEL), checkbox_width=18,
-                            checkbox_height=18).grid(row=0, column=col, sticky="w")
+            ui.focusable(ctk.CTkCheckBox(
+                checks, text=self.t(key), variable=var, command=self.regenerate_password,
+                font=T.font(T.S_LABEL), checkbox_width=18,
+                checkbox_height=18)).grid(row=0, column=col, sticky="w")
 
         # --- Action buttons ---
         actions = ctk.CTkFrame(body, fg_color="transparent")

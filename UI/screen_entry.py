@@ -71,14 +71,17 @@ class EntryMixin:
                                                                  padx=(T.GAP_S, 0))
         f["pwd"].bind("<KeyRelease>", lambda _e: self._refresh_form_meter(), add="+")
         f["pwd"].bind("<FocusIn>", lambda _e: self._refresh_form_meter(), add="+")
+        # A click is what decrypts the stored password (see secret_field); this
+        # runs after that, so the meter scores it straight away.
+        f["pwd"].bind("<Button-1>", lambda _e: self._refresh_form_meter(), add="+")
 
         ui.field_label(form, self.t("forms.url")).pack(anchor="w", pady=(T.GAP_L, 0))
         f["url"] = ui.text_field(form, placeholder="example.com")
         f["url"].pack(fill="x", pady=(4, 0))
 
         bar = ui.footer(self)
-        ui.primary_button(bar, self.t("forms.save_account"), self._save_form,
-                          height=42).pack(fill="x")
+        ui.default_button(self, ui.primary_button(
+            bar, self.t("forms.save_account"), self._save_form, height=42)).pack(fill="x")
 
     def _refresh_form_meter(self):
         pwd = self._form["pwd"]

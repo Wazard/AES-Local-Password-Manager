@@ -44,10 +44,10 @@ class ExtensionMixin:
         self._ext_status = ui.status_dot(head, "", False)
         self._ext_status.pack(side="right")
 
-        ctk.CTkCheckBox(bridge, text=self.t("extension.enable"),
+        ui.focusable(ctk.CTkCheckBox(bridge, text=self.t("extension.enable"),
                         variable=self.ext_enabled, command=self.toggle_extension,
                         font=T.font(T.S_BODY), checkbox_width=18, checkbox_height=18
-                        ).pack(anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
+                        )).pack(anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
         ui.hint(bridge, self.t("extension.hint", port=self.ext_port),
                 wraplength=420).pack(anchor="w", padx=T.PAD_CARD, pady=(6, T.GAP))
 
@@ -79,10 +79,10 @@ class ExtensionMixin:
         guard.pack(fill="x", pady=(T.GAP_L, T.GAP), padx=8)
         ui.heading(guard, self.t("extension.section_security")).pack(
             anchor="w", padx=T.PAD_CARD, pady=(T.PAD_CARD, 0))
-        ctk.CTkCheckBox(guard, text=self.t("extension.tamper"),
+        ui.focusable(ctk.CTkCheckBox(guard, text=self.t("extension.tamper"),
                         variable=self.tamper_enabled, command=self.toggle_tamper,
                         font=T.font(T.S_BODY), checkbox_width=18, checkbox_height=18
-                        ).pack(anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
+                        )).pack(anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
         ui.hint(guard, self.t("extension.tamper_hint"), wraplength=420).pack(
             anchor="w", padx=T.PAD_CARD, pady=(6, T.PAD_CARD))
 

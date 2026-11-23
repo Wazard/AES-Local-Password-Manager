@@ -6,7 +6,11 @@ palette change in UI/palette.json propagates everywhere.
 import customtkinter as ctk
 
 from UI import icons
+from UI import keyboard
 from UI import theme as T
+
+
+focusable = keyboard.focusable  # for the CTk controls a screen makes itself
 
 
 # --------------------------------------------------------------------------
@@ -16,8 +20,9 @@ def _button(parent, text, command, fg, hover, text_color, **kw):
     kw.setdefault("height", T.H_BTN)
     kw.setdefault("corner_radius", T.R_BTN)
     kw.setdefault("font", T.font(T.S_BODY, "bold"))
-    return ctk.CTkButton(parent, text=text, command=command, fg_color=fg,
-                         hover_color=hover, text_color=text_color, **kw)
+    return keyboard.focusable(ctk.CTkButton(
+        parent, text=text, command=command, fg_color=fg, hover_color=hover,
+        text_color=text_color, **kw))
 
 
 def primary_button(parent, text, command=None, **kw):
@@ -43,13 +48,15 @@ def ghost_button(parent, text, command=None, **kw):
     kw.setdefault("font", T.font(T.S_BODY))
     kw.setdefault("anchor", "center")
     kw.setdefault("text_color", T.TEXT_SECONDARY)
-    return ctk.CTkButton(parent, text=text, command=command, fg_color="transparent",
-                         hover_color=T.CARD_HOVER, corner_radius=T.R_BTN, **kw)
+    return keyboard.focusable(ctk.CTkButton(
+        parent, text=text, command=command, fg_color="transparent",
+        hover_color=T.CARD_HOVER, corner_radius=T.R_BTN, **kw))
 
 
 def icon_button(parent, icon_name, command=None, size=34, icon_px=18,
-                active=False, tint=None, tooltip=None):
-    """Square icon button. `active` gives it the primary fill (view toggles)."""
+                active=False, tint=None, tooltip=None, tab=True):
+    """Square icon button. `active` gives it the primary fill (view toggles).
+    `tab=False` leaves it out of the Tab order."""
     img = icons.load_tinted(icon_name, icon_px,
                             tint or (T.ON_PRIMARY if active else T.TEXT_SECONDARY))
     btn = ctk.CTkButton(
@@ -60,6 +67,8 @@ def icon_button(parent, icon_name, command=None, size=34, icon_px=18,
         command=command)
     if tooltip:
         attach_tooltip(btn, tooltip)
+    if tab:
+        keyboard.focusable(btn)
     return btn
 
 
@@ -142,6 +151,7 @@ class AppBar(ctk.CTkFrame):
             font=T.font(17), fg_color="transparent",
             text_color=T.TEXT_SECONDARY, hover_color=T.CARD_HOVER,
             command=lambda: self._back_cmd is not None and self._back_cmd())
+        keyboard.focusable(self._back)
         # Screen-specific controls (the dashboard's view toggles).
         self._slot = ctk.CTkFrame(left, fg_color="transparent")
 
@@ -153,6 +163,7 @@ class AppBar(ctk.CTkFrame):
             font=T.font(T.S_LABEL), dropdown_font=T.font(T.S_LABEL),
             fg_color=T.SECONDARY, button_color=T.SECONDARY,
             button_hover_color=T.SECONDARY_HOVER)
+        keyboard.focusable(self._lang)
         self._lang.pack(side="right", padx=(6, 0))
 
         # The vault-level destinations, which only exist while unlocked.
@@ -302,8 +313,10 @@ def secret_field(parent, value="", placeholder="", readonly=False, mono=True,
     entry.pack(side="left", fill="x", expand=True)
 
     state = {"shown": revealed, "loaded": reveal is None}
+    # Not a Tab stop, like the reveal button of a Windows password box.
     btn = icon_button(row, "eye.png" if not revealed else "eye-off.png",
-                      size=T.H_INPUT, icon_px=17)
+                      size=T.H_INPUT, icon_px=17, tab=False)
+    keyboard.mark_secret(entry)
 
     def load():
         if not state["loaded"]:
@@ -355,7 +368,21 @@ def secret_field(parent, value="", placeholder="", readonly=False, mono=True,
     if reveal is not None:
         unload()
         if not readonly:
-            entry.bind("<FocusIn>", lambda _e: load(), add="+")
+            # Decrypted when the user clicks in or starts editing, not when
+            # Tab merely passes through on the way to the Save button.
+            def load_to_edit(event):
+                if state["loaded"] or not keyboard.is_edit(event):
+                    return
+                inner = entry._entry
+                whole = (inner.selection_present() and inner.index("sel.first") == 0
+                         and inner.index("sel.last") == len(inner.get()))
+                load()
+                if whole:  # the stand-in was selected: typing replaces it all
+                    inner.selection_range(0, "end")
+                    inner.icursor("end")
+
+            entry.bind("<Button-1>", lambda _e: load(), add="+")
+            entry.bind("<KeyPress>", load_to_edit, add="+")
     entry.conceal = conceal
     entry.reset_secret = reset_secret
     entry.set_secret = set_secret
@@ -374,6 +401,7 @@ def set_text(entry, value):
     readonly = entry.cget("state") == "readonly"
     if readonly:
         entry.configure(state="normal")
+    keyboard.forget_history(entry)  # Ctrl+Z mustn't bring back what was here
     entry.delete(0, "end")
     if value:
         entry.insert(0, value)
@@ -487,15 +515,29 @@ class StatusLine(ctk.CTkLabel):
         kw.setdefault("wraplength", 400)
         kw.setdefault("justify", "left")
         super().__init__(parent, text="", text_color=T.TEXT_MUTED, **kw)
+        self._slot = None
+
+    def pack_after(self, widget, **opts):
+        """Take no room while empty, and appear right after `widget` when
+        there is something to say — for forms where a blank line would leave
+        a hole."""
+        self._slot = (widget, opts)
+        if self.cget("text"):
+            self.pack(after=widget, **opts)
 
     def show(self, text, kind="muted"):
         self.configure(text=text, text_color={
             "positive": T.POSITIVE, "negative": T.NEGATIVE,
             "warning": T.WARNING, "muted": T.TEXT_MUTED,
         }.get(kind, T.TEXT_MUTED))
+        if self._slot is not None and self.winfo_manager() != "pack":
+            widget, opts = self._slot
+            self.pack(after=widget, **opts)
 
     def clear(self):
         self.configure(text="")
+        if self._slot is not None:
+            self.pack_forget()
 
 
 def status_dot(parent, text, on):
@@ -554,6 +596,11 @@ def modal(app, title_text, message, buttons, icon_color=None):
     overlay = ctk.CTkFrame(app.container, fg_color=T.BG, corner_radius=0)
     overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
     overlay.lift()
+    overlay._sv_modal = True  # Tab and Enter stay inside it
+    try:
+        previous = app.focus_get()
+    except Exception:
+        previous = None
 
     panel = ctk.CTkFrame(overlay, fg_color=T.CARD, corner_radius=T.R_CARD,
                          border_width=T.BORDER_W, border_color=T.BORDER_STRONG)
@@ -575,19 +622,34 @@ def modal(app, title_text, message, buttons, icon_color=None):
             if overlay.winfo_exists():
                 overlay.destroy()
             app.unbind("<Escape>")
+            if previous is not None and previous.winfo_exists():
+                previous.focus_set()
             if callback is not None:
                 callback()
         return run
 
     maker = {"primary": primary_button, "danger": danger_button,
              "secondary": secondary_button}
+    made = []
     for label, style, callback in buttons:
-        maker.get(style, secondary_button)(
-            row, label, close_then(callback), width=96).pack(side="right", padx=(T.GAP_S, 0))
+        btn = maker.get(style, secondary_button)(row, label, close_then(callback), width=96)
+        btn.pack(side="right", padx=(T.GAP_S, 0))
+        made.append((btn, style))
 
     if buttons:
         app.bind("<Escape>", lambda _e: close_then(buttons[-1][2])())
+        # Enter takes the first button, unless that one destroys something:
+        # then it takes the cancel slot, so a stray Enter can't delete.
+        default = made[-1][0] if made[0][1] == "danger" else made[0][0]
+        keyboard.set_default(overlay, default)
+        default._canvas.focus_set()
     return overlay
+
+
+def default_button(app, button):
+    """Make `button` what Enter presses on the screen being built."""
+    keyboard.set_default(app.screen, button)
+    return button
 
 
 def confirm(app, title_text, message, on_yes, yes_label=None, no_label=None,

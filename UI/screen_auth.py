@@ -62,7 +62,16 @@ class AuthMixin:
             block, placeholder=self.t("auth.placeholder"), mono=False)
         pass_entry.configure(width=FIELD_W - T.H_INPUT - T.GAP_S)
         row.pack(pady=(4, 0))
-        pass_entry.bind("<Return>", lambda _e: self.attempt_login())
+
+        # Right under the password, where it is seen before unlocking. Made
+        # here so Tab goes field -> checkbox -> Unlock.
+        if not creating:
+            tray_chk = ui.focusable(ctk.CTkCheckBox(
+                block, text=self.t("auth.tray"), variable=self.minimize_to_tray,
+                font=T.font(T.S_LABEL), checkbox_width=18, checkbox_height=18))
+            tray_chk.pack(anchor="w", pady=(T.GAP, 0))
+            if not TRAY_AVAILABLE:
+                tray_chk.configure(state="disabled")
 
         # Vault creation is the one place a strength meter belongs on this screen.
         meter = None
@@ -71,12 +80,13 @@ class AuthMixin:
             meter.pack(fill="x", pady=(8, 0))
             pass_entry.bind("<KeyRelease>", self._on_master_typed, add="+")
 
-        status = ui.StatusLine(block, wraplength=FIELD_W, justify="center")
-        status.pack(pady=(8, 0))
-
-        ui.primary_button(
+        ui.default_button(self, ui.primary_button(
             block, self.t("vault.create_btn") if creating else self.t("auth.login_btn"),
-            self.attempt_login, width=FIELD_W, height=42).pack(pady=(T.GAP, T.GAP_S))
+            self.attempt_login, width=FIELD_W, height=42)).pack(pady=(T.GAP_L, T.GAP_S))
+
+        # Takes no room until there's something to say ("wrong password").
+        status = ui.StatusLine(block, wraplength=FIELD_W, justify="center")
+        status.pack_after(meter if creating else tray_chk, pady=(8, 0))
 
         if not hasattr(self, "_auth"):
             self._auth = {}
@@ -90,14 +100,6 @@ class AuthMixin:
 
         ui.secondary_button(block, self.t("auth.generate_btn"), self.show_gen_pass_screen,
                             width=FIELD_W, height=42).pack()
-
-        tray_chk = ctk.CTkCheckBox(block, text=self.t("auth.tray"),
-                                   variable=self.minimize_to_tray,
-                                   font=T.font(T.S_LABEL), checkbox_width=18,
-                                   checkbox_height=18)
-        tray_chk.pack(pady=(T.GAP_L, 0))
-        if not TRAY_AVAILABLE:
-            tray_chk.configure(state="disabled")
 
     def _refresh_auth(self, name):
         widgets = self._auth[name]

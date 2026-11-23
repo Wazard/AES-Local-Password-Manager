@@ -83,6 +83,7 @@ class DashboardMixin:
             value=self.search_query)
         self.search_entry.pack(side="left", fill="x", expand=True)
         self.search_entry.bind("<KeyRelease>", self._on_search)
+        self.search_entry.bind("<Return>", self._open_top_match)
 
         # Map localized labels <-> internal sort modes so the menu localizes.
         self.sort_label_to_mode = {
@@ -98,6 +99,7 @@ class DashboardMixin:
             font=T.font(T.S_LABEL), dropdown_font=T.font(T.S_LABEL),
             fg_color=T.SECONDARY, button_color=T.SECONDARY,
             button_hover_color=T.SECONDARY_HOVER)
+        ui.focusable(sort_menu)
         sort_menu.set(mode_to_label[self.sort_mode])
         sort_menu.pack(side="left", padx=(T.GAP_S, 0))
 
@@ -149,6 +151,15 @@ class DashboardMixin:
         if self._search_after is not None:
             self.after_cancel(self._search_after)
         self._search_after = self.after(SEARCH_DEBOUNCE_MS, self._apply_search)
+
+    def _open_top_match(self, _event=None):
+        """Enter in the search box opens the first account it finds."""
+        services = (self.search_cache.services(
+            self.vault_data, self.vault_revision, self.search_entry.get(), self.sort_mode)
+            if self.vault_data else [])
+        if services:
+            self.show_details(services[0])
+        return "break"
 
     def _apply_search(self):
         self._search_after = None

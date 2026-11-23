@@ -26,6 +26,7 @@ from core.session_crypto import SessionCrypto
 from localization.language_manager import LanguageManager
 
 from UI import components as ui
+from UI import keyboard
 from UI import theme as T
 from UI.theme import apply_theme
 from UI.tray import TrayManager, TRAY_AVAILABLE
@@ -140,6 +141,7 @@ class PasswordManagerGUI(ctk.CTk, AuthMixin, DashboardMixin, EntryMixin,
         self._tamper_after = None
         self.bind_all("<Key>", self._on_activity, add="+")
         self.bind_all("<ButtonPress>", self._on_activity, add="+")
+        keyboard.install(self)  # Tab, Enter and the Windows text-editing keys
 
         self.container = ctk.CTkFrame(self, fg_color="transparent")
         self.container.pack(fill="both", expand=True)
