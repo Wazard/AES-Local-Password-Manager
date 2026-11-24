@@ -23,9 +23,9 @@ localhost connection.
   `vault_bk_2026_08_08_1432_01.pwmanager` so the folder sorts chronologically,
   kept in OneDrive when there is one, and restorable from inside the app.
 - **Editable account names** — renaming an account keeps its place in the vault.
-- **Sync with iPhone** — over your Wi-Fi, confirmed with a code shown on the
-  phone: what you add or change on the iPhone comes into the PC's vault, and
-  the iPhone gets the PC's accounts back.
+- **Sync with your phone** (iPhone or Android) — over your Wi-Fi, confirmed
+  with a code shown on the phone: what you add or change on the phone comes
+  into the PC's vault, and the phone gets the PC's accounts back.
 - **Auto-lock and tray** — re-locks after inactivity and can keep running in the
   system tray.
 - **Localisation** — English, Italian, French, and Danish.
@@ -70,6 +70,12 @@ setup, pairing, and usage.
 A native iOS version lives in [`ios/`](ios/README.md). It opens the same vault
 file (for example from OneDrive), and GitHub Actions builds an unsigned `.ipa`
 for sideloading with AltStore or Sideloadly.
+
+## Android app
+
+The Android version lives in [`android/`](android/README.md): the same vault
+file and the same Wi-Fi sync, with fingerprint unlock instead of Face ID.
+GitHub Actions builds an `.apk` to install directly.
 
 ## Running from source
 

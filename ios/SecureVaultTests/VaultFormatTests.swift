@@ -131,6 +131,11 @@ final class VaultFormatTests: XCTestCase {
         XCTAssertEqual(TransferFrame.parse(frame + Data([0]), code: "123456", accepting: kinds), .rejected("protocol"))
         XCTAssertEqual(TransferFrame.parse(Data("GET / HTTP/1.1".utf8), code: "123456", accepting: kinds),
                        .rejected("protocol"))
+        // The PC's network probe, whole or split across reads; only as an opening message.
+        XCTAssertEqual(TransferFrame.parse(Data("SVH1".utf8), code: "123456", accepting: kinds), .hello)
+        XCTAssertEqual(TransferFrame.parse(Data("SVH".utf8), code: "123456", accepting: kinds), .needMore)
+        XCTAssertEqual(TransferFrame.parse(Data("SVH1".utf8), code: "123456", accepting: [TransferFrame.syncMerged]),
+                       .rejected("protocol"))
         let huge = Data("SVX1".utf8) + Data([0, 0x7F, 0xFF, 0xFF, 0xFF])
         XCTAssertEqual(TransferFrame.parse(huge, code: "123456", accepting: kinds), .rejected("toolarge"))
     }

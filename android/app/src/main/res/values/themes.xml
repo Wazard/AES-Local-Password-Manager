@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- bg_window from UI/palette.json, so there is no white flash before Compose draws. -->
+    <color name="window_background">#0C0E13</color>
+    <color name="ic_launcher_background">#6A5AE0</color>
+
+    <style name="Theme.SecureVault" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:colorBackground">@color/window_background</item>
+    </style>
+</resources>

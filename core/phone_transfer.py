@@ -1,6 +1,6 @@
-"""Sending the vault file to the iOS app over the local network.
+"""Sending the vault file to the phone app (iOS or Android) over the local network.
 
-The iPhone, on its "Receive from PC" screen, listens on TCP port PORT,
+The phone, on its "Connect to PC" screen, listens on TCP port PORT,
 announces itself over Bonjour as SERVICE, and shows a 6-digit code. This side
 finds it and sends one message:
 
@@ -22,6 +22,13 @@ salt — the phone's copy came from this PC), applies the changes the phone
 marked as not yet synced (see data_handler.merge_phone_changes), saves, and
 sends the result back, so both sides end up with the same file.
 
+Finding phones: the Bonjour query below, and, because a phone can't always
+announce itself (inside LiveContainer iOS refuses; some Android builds don't
+answer the kind of query sent here), a probe of PORT on every address of the
+local /24 networks. The probe sends HELLO and the phone answers one line,
+b"HELLO <its name>\\n" — older apps answer b"ERR protocol\\n", which still
+says a Secure Vault phone is listening there.
+
 What travels is the vault file exactly as it is on disk — already encrypted
 with the master password — so nothing here ever sees vault contents. The code
 proves the file came from the PC the user is standing at: without it the phone
@@ -31,15 +38,18 @@ the same exposure as keeping it in a cloud folder.
 """
 import hashlib
 import hmac
+import ipaddress
 import random
 import select
 import socket
 import struct
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 PORT = 53917
 SERVICE = "_securevault._tcp.local"
 MAGIC = b"SVX1"
+HELLO = b"SVH1"
 MAX_SIZE = 16 * 1024 * 1024
 
 _MDNS = ("224.0.0.251", 5353)
@@ -182,17 +192,72 @@ def send(host: str, vault: bytes, code: str, sender: str = None,
 
 
 # --------------------------------------------------------------------------
-# Finding iPhones (Bonjour, without a dependency)
+# Finding phones
 # --------------------------------------------------------------------------
 def discover(timeout: float = 1.5) -> list:
-    """iPhones currently showing the Receive screen, as
-    [{"name": ..., "host": ..., "port": ...}].
+    """Phones currently showing the Connect to PC screen, as
+    [{"name": ..., "host": ..., "port": ...}]; "name" is empty when the phone
+    was found by the probe but runs an app too old to say its name.
 
-    Sends a one-shot mDNS query from an ordinary port on every local
+    Bonjour and the network probe run at the same time; a phone both find is
+    listed once, under its Bonjour name. An empty list just means nothing
+    answered; the user can still type the phone's address."""
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        probed = pool.submit(_probe_subnets)
+        found = {d["host"]: d for d in _discover_bonjour(timeout)}
+        for device in probed.result():
+            found.setdefault(device["host"], device)
+    return sorted(found.values(), key=lambda d: (not d["name"], d["name"].lower(), d["host"]))
+
+
+def _probe_subnets(port: int = PORT, timeout: float = 1.0) -> list:
+    """Every address on this PC's private /24 networks that answers HELLO.
+
+    Plain outgoing TCP connections, so the firewall doesn't get involved.
+    Addresses with nothing behind them fail after `timeout`; the probes run
+    in parallel, so a whole /24 takes about two timeouts."""
+    targets = []
+    for ip in _local_ipv4s():
+        addr = ipaddress.ip_address(ip)
+        if not addr.is_private or addr.is_link_local or addr.is_loopback:
+            continue
+        net = ipaddress.ip_network(ip + "/24", strict=False)
+        targets += [str(h) for h in net.hosts() if str(h) != ip]
+    targets = list(dict.fromkeys(targets))[:4 * 254]   # at most four networks
+    if not targets:
+        return []
+    with ThreadPoolExecutor(max_workers=min(160, len(targets))) as pool:
+        results = pool.map(lambda h: probe(h, port, timeout), targets)
+        return [r for r in results if r]
+
+
+def probe(host: str, port: int = PORT, timeout: float = 1.0):
+    """{"name", "host", "port"} if a phone app is listening at host:port, else None."""
+    try:
+        with socket.create_connection((host, port), timeout=timeout) as s:
+            s.settimeout(1.5)
+            s.sendall(HELLO)
+            reply = b""
+            while not reply.endswith(b"\n") and len(reply) < 320:
+                chunk = s.recv(320)
+                if not chunk:
+                    break
+                reply += chunk
+    except OSError:
+        return None
+    line = reply.decode("utf-8", "replace").strip()
+    if line.startswith("HELLO"):
+        return {"name": line[5:].strip(), "host": host, "port": port}
+    if line.startswith("ERR "):   # an app from before HELLO: listening, but nameless
+        return {"name": "", "host": host, "port": port}
+    return None
+
+
+def _discover_bonjour(timeout: float) -> list:
+    """Sends a one-shot mDNS query from an ordinary port on every local
     interface. Responders answer such "legacy unicast" queries straight back
     to the asking port (RFC 6762 §6.7), so nothing has to listen on 5353 and
-    Windows Firewall has no reason to prompt. An empty list just means
-    nothing answered; the user can still type the phone's address."""
+    Windows Firewall has no reason to prompt."""
     query_id = random.randint(1, 0xFFFF)
     query = (struct.pack(">HHHHHH", query_id, 0, 1, 0, 0, 0)
              + _encode_name(SERVICE) + struct.pack(">HH", _PTR, 1))
@@ -235,7 +300,7 @@ def discover(timeout: float = 1.5) -> list:
         host = records["a"].get(target.lower()) or sender_ip
         label = instance[:-len(SERVICE) - 1] if instance.lower().endswith("." + SERVICE.lower()) else instance
         found[(host, port)] = {"name": label, "host": host, "port": port}
-    return sorted(found.values(), key=lambda d: d["name"].lower())
+    return list(found.values())
 
 
 def _local_ipv4s():

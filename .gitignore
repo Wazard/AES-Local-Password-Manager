@@ -45,3 +45,14 @@ installer.iss.bak
 ios/*.xcodeproj/
 ios/build/
 *.ipa
+
+# --- Android (Gradle output; signing keys never go in the repository) ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+*.jks
+*.keystore

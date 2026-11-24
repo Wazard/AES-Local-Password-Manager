@@ -1,8 +1,8 @@
-"""iPhone: sync with the iOS app, or send it this vault, over the local network.
+"""Phone: sync with the iOS or Android app, or send it this vault, over the local network.
 
 Only encrypted vault files travel (see core/phone_transfer.py); the phone
 shows a code that has to be typed here. Sync applies what was changed on the
-iPhone to this vault and sends the result back; Send replaces the iPhone's
+phone to this vault and sends the result back; Send replaces the phone's
 vault (it asks first). Discovery and network work run off the Tk thread and
 report back with `after`, so a slow network never freezes the window.
 """
@@ -46,7 +46,7 @@ class PhoneMixin:
             anchor="w", padx=T.PAD_CARD, pady=(T.GAP, 0))
         self._ph_address = ui.text_field(card, placeholder="192.168.1.20", mono=True)
         self._ph_address.pack(fill="x", padx=T.PAD_CARD, pady=(4, T.PAD_CARD))
-        # Typing an address overrides whichever iPhone was picked in the list.
+        # Typing an address overrides whichever phone was picked in the list.
         self._ph_address.bind("<KeyRelease>", lambda _e: self._ph_address.get().strip()
                               and self._ph_target.set(""))
 
@@ -55,7 +55,7 @@ class PhoneMixin:
         self._ph_code.pack(fill="x", pady=(4, 0))
 
         # Sync is the everyday action: it keeps what was changed on the
-        # iPhone. Sending replaces the iPhone's vault with this one.
+        # phone. Sending replaces the phone's vault with this one.
         buttons = ctk.CTkFrame(body, fg_color="transparent")
         buttons.pack(fill="x", pady=(T.GAP, 0))
         self._ph_sync = ui.default_button(
@@ -77,7 +77,7 @@ class PhoneMixin:
     def _leave_phone(self):
         ui.set_text(self._ph_code, "")
 
-    # --- finding iPhones -------------------------------------------------
+    # --- finding phones --------------------------------------------------
     def _phone_discover(self):
         self._ph_search_btn.configure(state="disabled")
         self._phone_show_devices(None)
@@ -113,7 +113,8 @@ class PhoneMixin:
             self._ph_target.set(hosts[0])
         for device, value in zip(found, hosts):
             ui.focusable(ctk.CTkRadioButton(
-                self._ph_list, text="%s  ·  %s" % (device["name"], device["host"]),
+                self._ph_list, text=("%s  ·  %s" % (device["name"], device["host"])
+                                     if device["name"] else device["host"]),
                 variable=self._ph_target, value=value, font=T.font(T.S_BODY),
                 radiobutton_width=18, radiobutton_height=18,
                 command=lambda: ui.set_text(self._ph_address, ""))).pack(anchor="w", pady=3)
@@ -202,7 +203,7 @@ class PhoneMixin:
         threading.Thread(target=work, daemon=True).start()
 
     def _merge_phone_vault(self, phone_vault, report):
-        """Apply the iPhone's marked changes to this vault, save, and return
+        """Apply the phone's marked changes to this vault, save, and return
         the saved file to send back. Runs on the Tk thread."""
         try:
             payload = encryption.open_with_key(phone_vault, self.vault_key,

@@ -87,8 +87,9 @@ struct ReceiveView: View {
                     LabeledContent("This iPhone's address", value: address)
                         .font(receiver.announced ? .subheadline : .headline)
                     if !receiver.announced {
-                        // Typical inside LiveContainer: iOS won't let the app announce itself.
-                        Text("The PC can't find this iPhone by itself here. In **Send to iPhone** on the PC, type this address instead of picking from the list.")
+                        // Typical inside LiveContainer: iOS won't let the app announce itself,
+                        // so the PC only finds it by probing the network.
+                        Text("iOS won't let this iPhone announce itself here. The PC should still find it by its address; if it doesn't, type this address on the PC.")
                             .font(.footnote)
                             .foregroundStyle(Theme.accent)
                             .multilineTextAlignment(.center)

@@ -10,12 +10,18 @@ import UIKit
 ///
 /// SVX1: the PC replaces this iPhone's vault. SVY1/SVY2/SVY3: sync — the PC
 /// asks for this vault, gets it, and sends back the merged one.
+///
+/// SVH1 on its own (no frame) is the PC's network probe, for when Bonjour
+/// can't find this iPhone: it gets "HELLO <device name>" back.
 enum TransferFrame {
     static let push = "SVX1", syncRequest = "SVY1", syncVault = "SVY2", syncMerged = "SVY3"
+    static let hello = "SVH1"
     static let maxSize = 16 * 1024 * 1024
 
     enum Outcome: Equatable {
         case needMore
+        /// The PC's probe (only where a first message is expected).
+        case hello
         /// The reason sent back to the PC: badcode, toolarge, protocol.
         case rejected(String)
         case accepted(kind: String, sender: String, payload: Data)
@@ -23,8 +29,11 @@ enum TransferFrame {
 
     static func parse(_ buffer: Data, code: String, accepting kinds: [String]) -> Outcome {
         let b = [UInt8](buffer)
+        let opening = kinds.contains(push)
+        if opening && b.count >= 4 && Array(b[0..<4]) == Array(hello.utf8) { return .hello }
         guard b.count >= 5 else {
-            return kinds.contains { Array(Array($0.utf8).prefix(b.count)) == b } ? .needMore : .rejected("protocol")
+            let starts = opening ? kinds + [hello] : kinds
+            return starts.contains { Array(Array($0.utf8).prefix(b.count)) == b } ? .needMore : .rejected("protocol")
         }
         guard let kind = kinds.first(where: { Array($0.utf8) == Array(b[0..<4]) }) else { return .rejected("protocol") }
         let nameLength = Int(b[4])
@@ -190,6 +199,8 @@ final class VaultReceiver: ObservableObject {
                     } else {
                         self.read(connection, buffer, accepting: kinds)
                     }
+                case .hello:
+                    self.reply(connection, "HELLO \(UIDevice.current.name)")
                 case .rejected(let reason):
                     self.reply(connection, "ERR \(reason)")
                     if reason == "badcode" {

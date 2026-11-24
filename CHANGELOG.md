@@ -4,10 +4,26 @@
 
 ### Added
 
+- An Android app (`android/`) that opens the same vault file and syncs with
+  the PC over Wi-Fi like the iOS app, with fingerprint unlock. GitHub Actions
+  builds the `.apk`.
+
 - **Sync with iPhone**: accounts added, changed, renamed or deleted on the
   iPhone are marked, and **Sync** on the PC's phone screen applies them to the
   PC's vault and sends the merged vault back, so both end up the same. The
   old Send to iPhone is now **Replace iPhone vault**.
+
+### Fixed
+
+- The PC's phone screen found no phone when the phone couldn't announce
+  itself over Bonjour (the iOS app inside LiveContainer, some networks and
+  VPNs), even though typing its address worked. It now also probes the local
+  network for the app's port, so the phone shows up in the list either way.
+
+### Changed
+
+- The PC's phone screen talks about "phone" rather than "iPhone", since it
+  syncs with the Android app too.
 
 ## 1.3.0
 
